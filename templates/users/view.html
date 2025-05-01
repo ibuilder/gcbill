@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Details</title>
+</head>
+<body>
+    <h1>User Details</h1>
+
+    <p><strong>Username:</strong> <?php echo $user['username']; ?></p>
+    <p><strong>Email:</strong> <?php echo $user['email']; ?></p>
+    <p><strong>First Name:</strong> <?php echo $user['first_name']; ?></p>
+    <p><strong>Last Name:</strong> <?php echo $user['last_name']; ?></p>
+    <p><strong>Role:</strong> <?php echo $user['role']; ?></p>
+
+    <a href="/users/<?php echo $user['id']; ?>/edit"><button>Edit</button></a>
+</body>
+</html>

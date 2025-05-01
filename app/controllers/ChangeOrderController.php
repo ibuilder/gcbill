@@ -5,10 +5,36 @@ namespace App\Controllers;
 
 use App\Models\ChangeOrder;
 use App\Models\ChangeOrderItem;
+use App\Libraries\Auth;
 use App\Database;
 
 class ChangeOrderController
 {
+    private $auth;
+
+    public function __construct()
+    {
+        $this->auth = new Auth();
+    }
+
+    private function before($action)
+    {
+        // Check if the user is logged in
+        if (!$this->auth->isLoggedIn()) {
+            // Redirect to login page
+            header('Location: /login');
+            exit;
+        }
+
+        // Check for permissions
+        $user = $this->auth->getCurrentUser();
+        if (!$this->auth->checkPermission($user, 'ChangeOrderController', $action)) {
+            // Redirect to 403 error page
+            header('HTTP/1.1 403 Forbidden');
+            echo "<h1>403 Forbidden</h1>";
+            exit;
+        }
+    }
     public function index($project_id)
     {
         // 1. Get the project id from the parameters.
@@ -33,6 +59,9 @@ class ChangeOrderController
             'change_orders' => $changeOrders
         ]);
     }
+    
+
+
 
     public function view($id)
     {
@@ -62,6 +91,9 @@ class ChangeOrderController
         return json_encode(['change_order' => $changeOrder->toArray(), 'change_order_items' => $changeOrderItems]);
     }
 
+    
+
+
     public function create($data)
     {
         // 1. Receive the data in an array as a parameter.
@@ -80,6 +112,7 @@ class ChangeOrderController
         return json_encode(['id' => $db->lastInsertId()]);
     }
 
+   
     public function edit($id, $data)
     {
         // 1. Receive the change order id as the first parameter.
@@ -107,6 +140,7 @@ class ChangeOrderController
         return json_encode(['id' => $changeOrderId]);
     }
 
+    
     public function delete($id)
     {
         // 1. Receive the change order id as a parameter.
@@ -127,5 +161,17 @@ class ChangeOrderController
         // 4. Return a string with the id of the deleted change order.
         return json_encode(['id' => $changeOrderId]);
 
+    }
+    
+    public function __call($method, $args)
+    {
+        // Check if the requested action is valid
+        if (method_exists($this, $method)) {
+             $this->before($method);
+
+            return call_user_func_array([$this, $method], $args);
+        } else {
+            header('HTTP/1.1 404 Not Found');
+        }
     }
 }

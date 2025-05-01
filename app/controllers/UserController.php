@@ -5,10 +5,22 @@ namespace App\Controllers;
 use App\Controller; // Extends base Controller
 use App\Models\User;
 use App\Helpers\SecurityHelper; // Import SecurityHelper
+use App\Libraries\Auth;
 
+/** */
 class UserController extends Controller {
 
     private User $userModel;
+    private const USERS_CONTROLLER = 'UserController';
+
+    public function before()
+    {
+        if (!$this->auth->isLoggedIn()) {
+            $this->redirect('/login');
+        }
+
+        return true;
+    }
 
     public function __construct() {
         parent::__construct(); // Calls parent constructor (DB, View, Auth)
@@ -84,10 +96,11 @@ class UserController extends Controller {
      */
     public function index(): void {
         // Permission Check
-        if (!$this->auth->checkRole('admin')) {
-             $_SESSION['flash_error'] = 'Access Denied.';
-             $this->redirect('/dashboard'); // Or show a 403 page
-             return;
+        $this->before();
+        if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
+            $_SESSION['flash_error'] = 'Access Denied.';
+            $this->redirect('/dashboard');
+           return;
         }
 
         // Fetch users (implement pagination later)
@@ -100,11 +113,13 @@ class UserController extends Controller {
      * Show form to create a new user (Admin only).
      */
     public function create(): void {
-         if (!$this->auth->checkRole('admin')) {
-             $_SESSION['flash_error'] = 'Access Denied.';
-             $this->redirect('/dashboard');
-             return;
-         }
+        // Permission Check
+        $this->before();
+         if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
+            $_SESSION['flash_error'] = 'Access Denied.';
+            $this->redirect('/dashboard');
+            return;
+        }
          $this->view->output('settings/users/create.html'); // Adjust template path
     }
 
@@ -112,8 +127,10 @@ class UserController extends Controller {
      * Store a new user (Admin only).
      */
     public function store(): void {
-         if (!$this->auth->checkRole('admin')) {
-             $_SESSION['flash_error'] = 'Access Denied.';
+        $this->before();
+        // Permission Check
+        if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
+            $_SESSION['flash_error'] = 'Access Denied.';
              $this->redirect('/dashboard');
              return;
          }
@@ -153,6 +170,98 @@ class UserController extends Controller {
              $_SESSION['flash_error'] = 'Failed to create user (e.g., duplicate username/email).';
              $this->redirect('/settings/users/create');
          }
+    }
+
+        /**
+     * View a specific user (Admin only).
+     * @param int $id The ID of the user to view.
+     */
+    public function view(int $id): void {
+         $this->before();
+         if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
+             $_SESSION['flash_error'] = 'Access Denied.';
+             $this->redirect('/dashboard');
+             return;
+         }
+
+        $user = $this->userModel->find($id);
+
+        if ($user) {
+            $this->view->output('settings/users/view.html', ['user' => $user]);
+        } else {
+            $_SESSION['flash_error'] = 'User not found.';
+            $this->redirect('/settings/users');
+        }
+    }
+
+    /**
+     * Edit a specific user (Admin only).
+     * @param int $id The ID of the user to edit.
+     */
+    public function edit(int $id): void {
+         $this->before();
+         if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
+             $_SESSION['flash_error'] = 'Access Denied.';
+             $this->redirect('/dashboard');
+             return;
+         }
+         $user = $this->userModel->find($id);
+         
+        if ($user) {
+            $this->view->output('settings/users/edit.html', ['user' => $user]);
+        } else {
+            $_SESSION['flash_error'] = 'User not found.';
+            $this->redirect('/settings/users');
+        }
+    }
+
+    /**
+     * Update a user (Admin only).
+     * @param int $id The ID of the user to update.
+     * @param array $data The updated user data.
+     */
+    public function update(int $id, array $data): void {
+         $this->before();
+         if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
+             $_SESSION['flash_error'] = 'Access Denied.';
+             $this->redirect('/dashboard');
+             return;
+         }
+
+         // --- CSRF Check ---
+         $submittedToken = $_POST[SecurityHelper::getFormInputName()] ?? null;
+         if (!SecurityHelper::validateToken($submittedToken)) {
+             $_SESSION['flash_error'] = 'Invalid request. Please try again.';
+             $this->redirect("/settings/users/$id/edit"); // Redirect back to form
+             return;
+         }
+         // --- End CSRF Check ---
+
+        // Implement input validation and CSRF checks here
+        $user = $this->userModel->find($id);
+        if (empty($user)) {
+            $_SESSION['flash_error'] = 'User not found';
+            $this->redirect('/settings/users');
+
+            return;
+        }
+        // Implement input validation and CSRF checks here
+        if ($this->userModel->update($id, $data)) {
+            $_SESSION['flash_success'] = 'User updated successfully.';
+        } else {
+            $_SESSION['flash_error'] = 'Failed to update user.';
+        }
+        $this->redirect('/settings/users'); // Redirect to user list
+    }
+
+    /**
+     * Delete a user (Admin only).
+     * @param int $id The ID of the user to delete.
+     */
+    public function delete(int $id): void {
+        $this->before();
+        // Implement
+        
     }
 
     // Add edit, update, delete methods similarly with permission checks

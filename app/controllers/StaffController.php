@@ -9,6 +9,7 @@ use App\Models\Staff;
 use App\Models\StaffPosition;
 use App\Models\User; // Need User model for linking
 use App\Helpers\SecurityHelper;
+use App\Libraries\Auth;
 
 class StaffController extends Controller {
 
@@ -17,13 +18,23 @@ class StaffController extends Controller {
     private User $userModel;
 
     public function __construct() {
-        parent::__construct();
-        if (!$this->auth->isLoggedIn()) {
-            $this->redirect('/login');
-        }
+        
+        parent::__construct();       
         $this->staffModel = new Staff($this->db);
         $this->positionModel = new StaffPosition($this->db);
         $this->userModel = new User($this->db); // For user linking dropdown
+        
+    }
+    
+    public function before(): void {
+        if (!$this->auth->isLoggedIn()) {
+            $this->redirect('/login');
+        }
+        $user = $_SESSION['user'];
+        
+        if(!$this->auth->checkPermission($user, 'StaffController', $this->action)){
+            $this->redirect('/403');
+        }
     }
 
     // --- Staff Member CRUD ---
@@ -32,6 +43,7 @@ class StaffController extends Controller {
         $staffList = $this->staffModel->findAll();
         $this->view->output('staff/list.html', [
             'pageTitle' => 'Staff Members',
+            'user' => $_SESSION['user'],
             'activeNav' => 'staff',
             'staffList' => $staffList
         ]);
@@ -41,6 +53,7 @@ class StaffController extends Controller {
         $positions = $this->positionModel->findAll();
         $users = $this->userModel->findAllSimple(); // Method needed in User model
         $this->view->output('staff/create.html', [
+            'user' => $_SESSION['user'],
             'pageTitle' => 'Add New Staff Member',
             'activeNav' => 'staff',
             'positions' => $positions,
@@ -85,6 +98,7 @@ class StaffController extends Controller {
             $_SESSION['flash_error'] = 'Staff member not found.'; $this->redirect('/staff'); return;
         }
         $this->view->output('staff/view.html', [
+            'user' => $_SESSION['user'],
             'pageTitle' => 'View Staff: ' . htmlspecialchars($staff['first_name'] . ' ' . $staff['last_name']),
             'activeNav' => 'staff',
             'staff' => $staff
@@ -102,6 +116,7 @@ class StaffController extends Controller {
         unset($_SESSION['form_data']);
 
         $this->view->output('staff/edit.html', [
+            'user' => $_SESSION['user'],
             'pageTitle' => 'Edit Staff Member',
             'activeNav' => 'staff',
             'staff' => $formData,
@@ -166,6 +181,7 @@ class StaffController extends Controller {
     public function positions(): void {
         $positions = $this->positionModel->findAll();
         $this->view->output('staff/positions_list.html', [
+            'user' => $_SESSION['user'],
             'pageTitle' => 'Staff Positions',
             'activeNav' => 'staff', // Keep staff nav active
             'positions' => $positions
@@ -174,6 +190,7 @@ class StaffController extends Controller {
 
     public function createPosition(): void {
          $this->view->output('staff/positions_create.html', [
+            'user' => $_SESSION['user'],
             'pageTitle' => 'Add New Staff Position',
             'activeNav' => 'staff',
             'position' => [],
@@ -213,6 +230,7 @@ class StaffController extends Controller {
          $formData = $_SESSION['form_data'] ?? $position;
          unset($_SESSION['form_data']);
          $this->view->output('staff/positions_edit.html', [
+            'user' => $_SESSION['user'],
              'pageTitle' => 'Edit Staff Position',
              'activeNav' => 'staff',
              'position' => $formData,
@@ -266,6 +284,7 @@ class StaffController extends Controller {
     // Placeholder for chart
     public function chart(): void {
          $this->view->output('staff/chart.html', [
+            'user' => $_SESSION['user'],
              'pageTitle' => 'Staff Chart (Placeholder)',
              'activeNav' => 'staff'
          ]);
