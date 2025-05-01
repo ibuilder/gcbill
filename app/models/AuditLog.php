@@ -1,4 +1,3 @@
-php
 <?php
 
 namespace App\Models;
@@ -18,8 +17,8 @@ class AuditLog extends \Core\Model
         $stmt->bindValue(':event', $event, \PDO::PARAM_STR);
         $stmt->bindValue(':table', $table, \PDO::PARAM_STR);
         $stmt->bindValue(':record_id', $recordId, \PDO::PARAM_INT);
-        $stmt->bindValue(':old_values', json_encode($oldValues), \PDO::PARAM_STR);
-        $stmt->bindValue(':new_values', json_encode($newValues), \PDO::PARAM_STR);
+        $stmt->bindValue(':old_values', $oldValues, \PDO::PARAM_STR);
+        $stmt->bindValue(':new_values', $newValues, \PDO::PARAM_STR);
 
         return $stmt->execute();
     }

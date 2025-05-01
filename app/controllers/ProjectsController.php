@@ -1,23 +1,27 @@
-php
 <?php
 
 namespace App\Controllers;
 
 use App\Libraries\Auth;
+use Exception;
+use App\Database;
 use App\Models\Project;
 use App\Models\Owner;
 
 class ProjectsController
 {
-    private $auth;
+    protected $controller = 'Projects';
+    protected $action;
+    protected $db;
 
-    public function __construct()
+    public function __construct(Database $db)
     {
-        $this->auth = new Auth();
+        $this->db = $db;
     }
 
-    protected function before()
+    protected function before($action)
     {
+        $this->action = $action;
         // Check if the user is logged in
         if (!Auth::isLoggedIn()) {
             // Redirect to the login page if not logged in
@@ -35,48 +39,137 @@ class ProjectsController
         }
     }
 
-    public function index()
+    /**
+     * Index action: Show all projects.
+     * @return void
+     */
+    public function index(): void
     {
-        $this->before();
-        $projects = Project::all();
-        include(__DIR__ . '/../../templates/projects/index.html');
+        $this->before('index');        
+        try{
+            $projects = Project::all();
+            include(__DIR__ . '/../../templates/projects/index.html');
+        }catch(Exception $e){
+            error_log('Error in ProjectsController::index: ' . $e->getMessage());
+            include(__DIR__ . '/../../templates/error.html');
+        }
     }
 
-    public function view($id)
-    {
+    /**
+     * View action: Show a specific project.
+     * @param int $id The project ID.
+     * @return void
+     */
+    public function view(int $id): void {
         $this->before('view');
-        $project = Project::find($id);
-        $owners = Owner::all();
-        include(__DIR__ . '/../../templates/projects/view.html');
-    }
-
-    public function create($data = [])
-    {
-        $this->before();
-        $project = new Project();
-        foreach ($data as $key => $value) {
-            $project->$key = $value;
+        try{
+            $project = Project::find($id);
+            if(!$project){
+                include(__DIR__ . '/../../templates/404.html');
+                return;
+            }
+            $owners = Owner::all();
+            include(__DIR__ . '/../../templates/projects/view.html');
+        }catch(Exception $e){
+            error_log('Error in ProjectsController::view: ' . $e->getMessage());
+            include(__DIR__ . '/../../templates/error.html');
         }
-        $project->save();
-        return "{$project->id}";
     }
 
-    public function edit($id, $data = [])
+    /**
+
+    /**
+     * Create action: Create a new project.
+     * @param array $data The project data.
+     * @return string The project ID.
+     */
+    public function create(array $data): string
     {
-        $this->before();
-        $project = Project::find($id);
-        foreach ($data as $key => $value) {
-            $project->$key = $value;
+        $this->before('create');        
+        try{
+            $project = new Project();
+            foreach ($data as $key => $value) {
+                $project->$key = $value;
+            }
+            $result = $project->create($data);
+            if(!$result){
+                include(__DIR__ . '/../../templates/error.html');
+                return "";
+            }
+            return "{$result}";
+        }catch(Exception $e){
+            error_log('Error in ProjectsController::create: ' . $e->getMessage());
+            include(__DIR__ . '/../../templates/error.html');
+            return "";
         }
-        $project->save();
-        return "{$project->id}";
     }
 
-    public function delete($id)
+    /**
+     * Edit action: Update an existing project.
+     * @param int $id The project ID.
+     * @param array $data The project data.
+     * @return string The project ID.
+     */
+    public function edit(int $id, array $data): string
     {
-        $this->before();
-        $project = Project::find($id);
-        $project->delete();
-        return "{$project->id}";
+        $this->before('edit');
+        try{
+            $project = Project::find($id);
+            if(!$project){
+                include(__DIR__ . '/../../templates/404.html');
+                return "";
+            }
+            $result = $project->update($id, $data);
+            if(!$result){
+                include(__DIR__ . '/../../templates/error.html');
+                return "";
+            }
+            return "{$id}";
+        }catch(Exception $e){
+            error_log('Error in ProjectsController::edit: ' . $e->getMessage());
+            include(__DIR__ . '/../../templates/error.html');
+            return "";
+        }
     }
-}
+
+    /**
+     * Delete action: Delete a project.
+     * @param int $id The project ID.
+     * @return string The project ID.
+     */
+    public function delete(int $id): string
+    {
+        $this->before('delete');
+        try{
+            $project = Project::find($id);
+            if(!$project){
+                include(__DIR__ . '/../../templates/404.html');
+                return "";
+            }
+            $result = $project->delete($id);
+            if(!$result){
+                include(__DIR__ . '/../../templates/error.html');
+                return "";
+            }
+            return "{$id}";
+        }catch(Exception $e){
+            error_log('Error in ProjectsController::delete: ' . $e->getMessage());
+            include(__DIR__ . '/../../templates/error.html');
+            return "";
+        }
+    }
+    
+    /**
+     * Magic method to handle invalid actions.
+     * @param string $method The method name.
+     * @param array $args The arguments.
+     * @return void
+     */
+    public function __call(string $method, array $args): void
+    {
+        if (method_exists($this, $method)) {
+            call_user_func_array([$this, $method], $args);
+        } else {
+            header('HTTP/1.1 404 Not Found');
+        }
+    }
