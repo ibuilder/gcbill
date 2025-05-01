@@ -1,0 +1,31 @@
+{
+    "name": "your-vendor/construction-billing-app",
+    "description": "Construction Billing Management System",
+    "type": "project",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Your Name",
+            "email": "your.email@example.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "vlucas/phpdotenv": "^5.5" 
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        },
+        "files": [
+            "app/helpers/auth_helper.php",
+            "app/helpers/validation_helper.php",
+            "app/helpers/pdf_helper.php",
+            "app/helpers/excel_helper.php",
+            "app/helpers/security_helper.php"
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}

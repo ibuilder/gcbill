@@ -1,0 +1,17 @@
+<!-- filepath: c:\Users\iphoe\OneDrive\Documents\Server\construction-billing\production\construction-billing-app\templates\staff\create.html -->
+<?php
+global $config;
+echo $view->includePartial('partials/header.html', [
+    'pageTitle' => $pageTitle ?? 'Add Staff', 'config' => $config, 'currentUser' => $currentUser ?? null, 'activeNav' => $activeNav ?? 'staff'
+]);
+?>
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><?= htmlspecialchars($pageTitle ?? 'Add New Staff Member') ?></h1>
+</div>
+<?php
+$staffData = $_SESSION['form_data'] ?? $staff ?? []; unset($_SESSION['form_data']);
+echo $view->includePartial('staff/_form.html', [
+    'staff' => $staffData, 'positions' => $positions ?? [], 'users' => $users ?? [], 'formAction' => $formAction ?? '/staff/store'
+]);
+?>
+<?php echo $view->includePartial('partials/footer.html', ['config' => $config]); ?>

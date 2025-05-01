@@ -1,0 +1,59 @@
+<!-- filepath: c:\Users\iphoe\OneDrive\Documents\Server\construction-billing\production\construction-billing-app\templates\dashboard.html -->
+<?php
+// Use the View instance passed to the template to include partials
+// Pass necessary data like pageTitle and config to the header
+global $config; // Make config available
+echo $view->includePartial('partials/header.html', [
+    'pageTitle' => $pageTitle ?? 'Dashboard',
+    'config' => $config,
+    'currentUser' => $currentUser ?? null, // Pass user data
+    'activeNav' => $activeNav ?? null // Pass active nav indicator
+]);
+?>
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><?= htmlspecialchars($pageTitle ?? 'Dashboard') ?></h1>
+    <!-- Optional: Add buttons or controls here -->
+    <!-- <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary">Share</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+        </div>
+    </div> -->
+</div>
+
+<!-- Dashboard Content -->
+<p>Welcome back, <?= htmlspecialchars($currentUser['first_name'] ?? $currentUser['username'] ?? 'User') ?>!</p>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-header">Projects</div>
+            <div class="card-body">
+                <h5 class="card-title"><?= htmlspecialchars($projectCount ?? 0) ?></h5>
+                <p class="card-text">Total projects managed.</p>
+                <a href="/projects" class="btn btn-outline-light btn-sm">View Projects</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+         <div class="card text-white bg-success mb-3">
+            <div class="card-header">Active Staff</div>
+            <div class="card-body">
+                <h5 class="card-title"><?= htmlspecialchars($activeStaffCount ?? 0) ?></h5>
+                <p class="card-text">Currently active staff members.</p>
+                 <a href="/staff" class="btn btn-outline-light btn-sm">View Staff</a>
+            </div>
+        </div>
+    </div>
+    <!-- Add more summary cards as needed -->
+</div>
+
+<!-- Add charts or recent activity sections here -->
+
+<?php
+// Include the footer partial
+echo $view->includePartial('partials/footer.html', [
+     'config' => $config // Pass config if needed in footer
+]);
+?>

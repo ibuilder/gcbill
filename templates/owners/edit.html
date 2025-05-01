@@ -1,0 +1,25 @@
+<!-- filepath: c:\Users\iphoe\OneDrive\Documents\Server\construction-billing\production\construction-billing-app\templates\owners\edit.html -->
+<?php
+global $config;
+echo $view->includePartial('partials/header.html', [
+    'pageTitle' => $pageTitle ?? 'Edit Owner',
+    'config' => $config,
+    'currentUser' => $currentUser ?? null,
+    'activeNav' => $activeNav ?? 'owners'
+]);
+?>
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><?= htmlspecialchars($pageTitle ?? 'Edit Owner') ?></h1>
+</div>
+
+<?php
+echo $view->includePartial('owners/_form.html', [
+    'owner' => $owner ?? [], // Data from controller
+    'formAction' => $formAction ?? '/owners/update/' . ($owner['id'] ?? 0)
+]);
+?>
+
+<?php
+echo $view->includePartial('partials/footer.html', ['config' => $config]);
+?>

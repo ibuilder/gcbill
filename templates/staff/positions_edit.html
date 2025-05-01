@@ -1,0 +1,16 @@
+<!-- filepath: c:\Users\iphoe\OneDrive\Documents\Server\construction-billing\production\construction-billing-app\templates\staff\positions_edit.html -->
+<?php
+global $config;
+echo $view->includePartial('partials/header.html', [
+    'pageTitle' => $pageTitle ?? 'Edit Position', 'config' => $config, 'currentUser' => $currentUser ?? null, 'activeNav' => $activeNav ?? 'staff'
+]);
+?>
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><?= htmlspecialchars($pageTitle ?? 'Edit Staff Position') ?></h1>
+</div>
+<?php
+echo $view->includePartial('staff/_position_form.html', [
+    'position' => $position ?? [], 'formAction' => $formAction ?? '/staff/positions/update/' . ($position['id'] ?? 0)
+]);
+?>
+<?php echo $view->includePartial('partials/footer.html', ['config' => $config]); ?>
