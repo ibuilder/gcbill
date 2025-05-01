@@ -15,7 +15,7 @@ CREATE TABLE `users` (
   `password_hash` VARCHAR(255) NOT NULL,
   `first_name` VARCHAR(100) NULL,
   `last_name` VARCHAR(100) NULL,
-  `role` ENUM('admin', 'manager', 'staff') NOT NULL DEFAULT 'staff', -- Adjust roles as needed
+  `role` ENUM('admin', 'manager', 'billing', 'staff') NOT NULL DEFAULT 'staff', -- Adjust roles as needed
   `is_active` BOOLEAN NOT NULL DEFAULT true,
   `last_login_at` TIMESTAMP NULL DEFAULT NULL,
   `reset_token` VARCHAR(100) NULL DEFAULT NULL,
@@ -261,5 +261,20 @@ CREATE TABLE billing_details (
 CREATE INDEX idx_billing_details_sov ON billing_details(sov_item_id);
 
 -- Add other tables like Change Orders, Expenses, etc. as needed
+
+SET FOREIGN_KEY_CHECKS = 1;
+-- user-permissions-schema.sql
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS `user_permissions`;
+CREATE TABLE `user_permissions` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `role` ENUM('admin', 'manager', 'billing', 'staff') NOT NULL DEFAULT 'staff',
+  `controller` VARCHAR(255) NOT NULL,
+  `action` VARCHAR(255) NOT NULL,
+  UNIQUE KEY `uk_role_controller_action` (`role`, `controller`, `action`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
