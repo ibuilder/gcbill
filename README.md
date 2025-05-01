@@ -1,3 +1,57 @@
+### README.md
+
+Here’s a sample README.md file detailing the file structure and roadmap:
+
+```markdown
+# Construction Billing Management System
+
+A comprehensive PHP application for general contractor owner billings with Bootstrap, HTML5, Web3, and Google AMP support.
+
+## Features
+
+- **Staff Management**: Create and manage staffing charts with detailed information.
+- **Owner Management**: Generate and maintain owner charts and information.
+- **General Conditions**: Configure staff salary rates and expense tracking.
+- **GMP Management**: Setup and track Guaranteed Maximum Price schedules of values.
+- **AIA Document Support**: Generate G702/G703 forms exportable to PDF or Excel.
+- **Responsive Design**: Built with Bootstrap for optimal display on any device.
+- **Modern Standards**: Incorporates HTML5, Web3, and Google AMP for performance.
+
+## File Structure
+
+```
+/ (root)
+├── index.php                  # Application entry point
+├── README.md                  # Project documentation
+├── composer.json              # PHP dependencies
+├── .htaccess                  # URL rewriting and security
+├── config/                    # Configuration files
+│   ├── config.php             # Main configuration
+│   ├── database.php           # Database connection settings
+│   └── routes.php             # Application routes
+├── app/                       # Application core files
+│   ├── bootstrap.php          # Application bootstrapper
+│   ├── controllers/           # Controller classes
+│   ├── models/                # Data models
+│   ├── helpers/               # Helper functions
+│   └── libraries/             # Custom libraries
+├── public/                    # Publicly accessible files
+│   ├── css/                   # CSS files
+│   ├── js/                    # JavaScript files
+│   ├── img/                   # Image files
+│   └── uploads/               # User uploaded files
+├── templates/                 # HTML templates
+│   ├── partials/              # Reusable page components
+│   ├── dashboard.html         # Main dashboard
+│   ├── staff/                 # Staff management templates
+│   ├── owners/                # Owner management templates
+│   ├── general-conditions/    # General conditions templates
+│   ├── gmp/                   # GMP management templates
+│   ├── aia/                   # AIA document templates
+│   ├── settings/              # Application settings
+│   └── auth/                  # Authentication templates
+└── database/                  # Database files and migrations
+```
 ### Application Structure
 
 Here’s a proposed file structure for the application:
@@ -103,62 +157,6 @@ Here’s a proposed file structure for the application:
     ├── migrations/
     └── seeds/
 ```
-
-### README.md
-
-Here’s a sample README.md file detailing the file structure and roadmap:
-
-```markdown
-# Construction Billing Management System
-
-A comprehensive PHP application for general contractor owner billings with Bootstrap, HTML5, Web3, and Google AMP support.
-
-## Features
-
-- **Staff Management**: Create and manage staffing charts with detailed information.
-- **Owner Management**: Generate and maintain owner charts and information.
-- **General Conditions**: Configure staff salary rates and expense tracking.
-- **GMP Management**: Setup and track Guaranteed Maximum Price schedules of values.
-- **AIA Document Support**: Generate G702/G703 forms exportable to PDF or Excel.
-- **Responsive Design**: Built with Bootstrap for optimal display on any device.
-- **Modern Standards**: Incorporates HTML5, Web3, and Google AMP for performance.
-
-## File Structure
-
-```
-/ (root)
-├── index.php                  # Application entry point
-├── README.md                  # Project documentation
-├── composer.json              # PHP dependencies
-├── .htaccess                  # URL rewriting and security
-├── config/                    # Configuration files
-│   ├── config.php             # Main configuration
-│   ├── database.php           # Database connection settings
-│   └── routes.php             # Application routes
-├── app/                       # Application core files
-│   ├── bootstrap.php          # Application bootstrapper
-│   ├── controllers/           # Controller classes
-│   ├── models/                # Data models
-│   ├── helpers/               # Helper functions
-│   └── libraries/             # Custom libraries
-├── public/                    # Publicly accessible files
-│   ├── css/                   # CSS files
-│   ├── js/                    # JavaScript files
-│   ├── img/                   # Image files
-│   └── uploads/               # User uploaded files
-├── templates/                 # HTML templates
-│   ├── partials/              # Reusable page components
-│   ├── dashboard.html         # Main dashboard
-│   ├── staff/                 # Staff management templates
-│   ├── owners/                # Owner management templates
-│   ├── general-conditions/    # General conditions templates
-│   ├── gmp/                   # GMP management templates
-│   ├── aia/                   # AIA document templates
-│   ├── settings/              # Application settings
-│   └── auth/                  # Authentication templates
-└── database/                  # Database files and migrations
-```
-
 ## Required SVG Files
 
 The following SVG files need to be generated:

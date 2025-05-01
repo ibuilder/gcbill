@@ -1,0 +1,139 @@
+<?php
+global $config;
+// $viewHelper is passed from the controller
+echo $view->includePartial('partials/header.html', [
+    'pageTitle' => $pageTitle ?? 'View Project',
+    'config' => $config, 'currentUser' => $currentUser ?? null, 'activeNav' => $activeNav ?? 'projects'
+]);
+?>
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <div>
+        <h1 class="h2"><?= htmlspecialchars($pageTitle ?? 'View Project') ?></h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/projects">Projects</a></li>
+                <li class="breadcrumb-item active" aria-current="page"><?= htmlspecialchars($project['project_number']) ?></li>
+            </ol>
+        </nav>
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if ($project['status'] === 'planning'): ?>
+            <a href="/projects/edit/<?= $project['id'] ?>" class="btn btn-sm btn-outline-primary me-2">Edit Project</a>
+        <?php endif; ?>
+        <a href="/projects/<?= $project['id'] ?>/change-orders" class="btn btn-sm btn-outline-secondary me-2">Change Orders</a>
+        <a href="/projects" class="btn btn-sm btn-outline-secondary">Back to Project List</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">Project Information</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Project Number:</strong> <?= htmlspecialchars($project['project_number']) ?></p>
+                        <p><strong>Project Name:</strong> <?= htmlspecialchars($project['project_name']) ?></p>
+                        <p><strong>Contract Amount:</strong> <?= $viewHelper->formatCurrency($project['contract_amount']) ?></p>
+                        <p><strong>Guaranteed Max. Price (GMP):</strong> <?= $viewHelper->formatCurrency($project['gmp_amount']) ?></p>
+                        <p><strong>GC Fee Percentage:</strong> <?= number_format($project['gc_fee_percentage'] * 100, 2) ?>%</p>
+                        <p><strong>Retainage:</strong> <?= number_format($project['retainage_percentage'] * 100, 2) ?>%</p>
+                        <p><strong>Status:</strong> <span class="badge bg-<?= $viewHelper->getStatusBadgeClass($project['status']) ?>"><?= ucfirst(htmlspecialchars($project['status'])) ?></span></p>
+
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Start Date:</strong> <?= $viewHelper->formatDate($project['start_date']) ?></p>
+                        <p><strong>Completion Date:</strong> <?= $viewHelper->formatDate($project['completion_date']) ?></p>
+                        <p><strong>Owner:</strong> <a href="/owners/view/<?= $owner['id'] ?>"><?= htmlspecialchars($owner['owner_name']) ?></a></p>
+                        <p><strong>Address:</strong></p>
+                        <address>
+                            <?= htmlspecialchars($project['address_line1']) ?><br>
+                            <?= !empty($project['address_line2']) ? htmlspecialchars($project['address_line2']) . '<br>' : '' ?>
+                            <?= htmlspecialchars($project['city']) ?><?= !empty($project['city']) && !empty($project['state']) ? ',' : '' ?> <?= htmlspecialchars($project['state']) ?> <?= htmlspecialchars($project['zip_code']) ?>
+                        </address>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">Staff Assigned</div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Position</th>
+                        <th>Billing Rate</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php if (empty($projectStaff)): ?>
+                        <tr><td colspan="3" class="text-center">No staff assigned to this project.</td></tr>
+                    <?php else: ?>
+                        <?php foreach ($projectStaff as $staff): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($staff['full_name']) ?></td>
+                                <td><?= htmlspecialchars($staff['position_title']) ?></td>
+                                <td><?= $viewHelper->formatCurrency($staff['billing_rate']) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">Quick Actions</div>
+            <div class="card-body">
+                <a href="/projects/<?= $project['id'] ?>/billings" class="btn btn-primary mb-2 w-100">Manage Billings</a><br>
+                <a href="/projects/<?= $project['id'] ?>/sov" class="btn btn-outline-primary w-100">Manage Schedule of Values</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteSovButtons = document.querySelectorAll('.delete-sov-btn');
+        deleteSovButtons.forEach(button => {
+            button.addEventListener('click', function(event) {
+                event.preventDefault(); // Prevent default link behavior
+                const sovId = this.getAttribute('data-sov-id');
+                const confirmation = confirm('Are you sure you want to delete this SOV item?');
+                if (confirmation) {
+                    // Proceed with AJAX request
+                    fetch(`/sov/delete/${sovId}`, {
+                        method: 'POST', // Use POST for delete actions
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest' // Indicate AJAX request
+                        }
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                // Success: Remove the row from the table
+                                const row = this.closest('tr');
+                                row.remove();
+                                // Optionally, display a success message
+                                alert('SOV item deleted successfully.');
+                            } else {
+                                // Handle errors
+                                alert('Error deleting SOV item.');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Error deleting SOV item.');
+                        });
+                }
+            });
+        });
+    });
+</script>
+
+<?php echo $view->includePartial('partials/footer.html', ['config' => $config]); ?>

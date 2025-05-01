@@ -2,6 +2,8 @@
 // filepath: c:\Users\iphoe\OneDrive\Documents\Server\construction-billing\production\construction-billing-app\app\Controllers\BillingController.php
 <?php
 
+use TCPDF;
+
 namespace App\Controllers;
 
 use App\Controller;
@@ -13,6 +15,8 @@ use App\Helpers\SecurityHelper;
 use App\Helpers\CalculationHelper; // We'll create this helper later
 use App\Helpers\ViewHelper;
 
+
+
 class BillingController extends Controller {
 
     private Billing $billingModel;
@@ -20,6 +24,7 @@ class BillingController extends Controller {
     private Project $projectModel;
     private Sov $sovModel;
 
+    
     public function __construct() {
         parent::__construct();
         if (!$this->auth->isLoggedIn()) {
@@ -144,6 +149,13 @@ class BillingController extends Controller {
      * Accessed via /billings/edit/{billingId}
      */
     public function edit(int $billingId): void {
+        
+        if (!SecurityHelper::validateToken($_POST[SecurityHelper::getFormInputName()] ?? null) && isset($_POST[SecurityHelper::getFormInputName()])) {
+            $_SESSION['flash_error'] = 'Invalid request token.';
+             $this->redirect('/billings/edit/' . $billingId); return;
+         }
+
+
         $billing = $this->billingModel->findById($billingId);
         if (!$billing) {
             $_SESSION['flash_error'] = 'Billing not found.';
@@ -156,6 +168,12 @@ class BillingController extends Controller {
              $_SESSION['flash_error'] = 'Associated project not found.';
              $this->redirect('/projects');
              return;
+        }
+
+         // Check billing status
+        if ($billing['status'] !== 'draft') {
+            $_SESSION['flash_error'] = 'You can only edit draft billings.';
+            header('Location: /billings/view/' . $billingId); // Redirect to billing view
         }
 
         // We will load SOV and billing details via AJAX in the view
@@ -340,28 +358,23 @@ class BillingController extends Controller {
      * Accessed via POST /billings/delete/{billingId}
      */
     public function delete(int $billingId): void {
-         if (!SecurityHelper::validateToken($_POST[SecurityHelper::getFormInputName()] ?? null)) {
-             $_SESSION['flash_error'] = 'Invalid request token.';
-             // Determine where to redirect - maybe back to project's billing list?
-             // Need project ID for that.
-             $billing = $this->billingModel->findById($billingId);
-             $redirectUrl = $billing ? '/projects/' . $billing['project_id'] . '/billings' : '/projects';
-             $this->redirect($redirectUrl); return;
-         }
-
          $billing = $this->billingModel->findById($billingId);
-         if (!$billing) {
-             $_SESSION['flash_error'] = 'Billing not found.';
-             $this->redirect('/projects'); return;
-         }
-
-         // Add check: Only allow deleting 'draft' billings?
-         if ($billing['status'] !== 'draft') {
-              $_SESSION['flash_error'] = 'Cannot delete billing, status is not draft.';
-              $this->redirect('/projects/' . $billing['project_id'] . '/billings'); return;
-         }
-
-         $projectId = $billing['project_id']; // Get project ID before deleting
+          if (!$billing) {
+              $_SESSION['flash_error'] = 'Billing not found.';
+              $this->redirect('/projects'); return;
+          }
+        
+          // Check billing status
+          if ($billing['status'] !== 'draft') {
+              $_SESSION['flash_error'] = 'You can only delete draft billings.';     
+               $this->redirect('/projects/' . $billing['project_id'] . '/billings'); // Redirect to project's billing list
+          }
+        
+          $projectId = $billing['project_id']; // Get project ID before deleting
+          if (!SecurityHelper::validateToken($_POST[SecurityHelper::getFormInputName()] ?? null) && isset($_POST[SecurityHelper::getFormInputName()])) {
+              $_SESSION['flash_error'] = 'Invalid request token.';
+               $this->redirect('/projects/' . $projectId . '/billings'); return;
+          }
 
          if ($this->billingModel->delete($billingId) > 0) {
              $_SESSION['flash_success'] = 'Billing deleted successfully.';
@@ -369,17 +382,53 @@ class BillingController extends Controller {
              $_SESSION['flash_error'] = 'Failed to delete billing.';
          }
          $this->redirect('/projects/' . $projectId . '/billings');
+    /**
+     * Display a non-editable view of the billing application.
+     */
+    public function submit(int $billingId): void
+    {
+        $billing = $this->billingModel->findById($billingId);
+        if (!$billing) {
+            $_SESSION['flash_error'] = 'Billing not found.';
+            $this->redirect('/projects');
+            return;
+        }
+        $this->billingModel->update($billingId, ['status' => 'submitted']);
+        $_SESSION['flash_success'] = 'Billing status updated to submitted.';
+        $this->redirect('/billings/view/' . $billingId);
     }
 
-    // Placeholder for view/PDF generation
-    public function view(int $billingId): void {
-         // Fetch data, generate PDF or show HTML view
-         $_SESSION['flash_info'] = 'Billing view/PDF generation not yet implemented.';
-         $billing = $this->billingModel->findById($billingId);
-         $redirectUrl = $billing ? '/projects/' . $billing['project_id'] . '/billings' : '/projects';
-         $this->redirect($redirectUrl);
+    /**
+     * Approve a billing.
+     */
+    public function approve(int $billingId): void
+    {
+        $billing = $this->billingModel->findById($billingId);
+        if (!$billing) {
+            $_SESSION['flash_error'] = 'Billing not found.';
+            $this->redirect('/projects');
+            return;
+        }
+        $this->billingModel->update($billingId, ['status' => 'approved']);
+        $_SESSION['flash_success'] = 'Billing status updated to approved.';
+        $this->redirect('/billings/view/' . $billingId);
     }
 
+    /**
+     * Mark a billing as paid.
+     */
+    public function pay(int $billingId): void
+    {
+        $billing = $this->billingModel->findById($billingId);
+        if (!$billing) {
+            $_SESSION['flash_error'] = 'Billing not found.';
+            $this->redirect('/projects');
+            return;
+        }
+        $this->billingModel->update($billingId, ['status' => 'paid']);
+        $_SESSION['flash_success'] = 'Billing status updated to paid.';
+        $this->redirect('/billings/view/' . $billingId);
+    }
     /**
      * Display a non-editable view of the billing application.
      * Accessed via /billings/view/{billingId}
@@ -422,15 +471,49 @@ class BillingController extends Controller {
             $previousPaymentsTotal
         );
 
-        $this->view->output('billings/view.html', [
-            'pageTitle' => 'View Billing #' . $billing['billing_number'] . ' - ' . htmlspecialchars($project['project_name']),
-            'activeNav' => 'projects',
-            'project' => $project,
-            'billing' => $billing,
-            'billingDetails' => $calculatedDetails, // Pass calculated details
-            'summary' => $summary, // Pass calculated summary
-            'viewHelper' => new ViewHelper() // Pass instance for use in template
-        ]);
+        // Check if we should generate PDF
+        if (isset($_GET['pdf'])) {
+            require_once __DIR__ . '/../../vendor/autoload.php';
+            // create new PDF document
+            $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+            // set document information
+            $pdf->SetCreator(PDF_CREATOR);
+            $pdf->SetAuthor('Construction Billing App');
+            $pdf->SetTitle('Billing #' . $billing['billing_number']);
+            $pdf->SetSubject('Billing Application');
+
+            // add a page
+            $pdf->AddPage();
+            $currentDate = date('Y-m-d H:i:s');
+            // Generate HTML content
+            $html = '<h1>Billing #' . $billing['billing_number'] . '</h1>';
+            $html .= '<p>Generated on: '.$currentDate.'</p>';
+            // Output billing details
+            $html .= '<h2>Project: ' . htmlspecialchars($project['project_name']) . '</h2>';
+            // Output other billing data in HTML format...
+            $html .='<p>Total Earned Less Retainage: ' . htmlspecialchars($summary['total_earned_less_retainage']).'</p>';
+
+
+            // output the HTML content
+            $pdf->writeHTML($html, true, false, true, false, '');
+
+            // reset pointer to the last page
+            $pdf->lastPage();
+            $pdfFileName = 'billing-' . $billingId . '.pdf';
+            //Close and output PDF document
+            $pdf->Output($pdfFileName, 'D');
+        } else {
+            $this->view->output('billings/view.html', [
+                'pageTitle' => 'View Billing #' . $billing['billing_number'] . ' - ' . htmlspecialchars($project['project_name']),
+                'activeNav' => 'projects',
+                'project' => $project,
+                'billing' => $billing,
+                'billingDetails' => $calculatedDetails, // Pass calculated details
+                'summary' => $summary, // Pass calculated summary
+                'viewHelper' => new ViewHelper() // Pass instance for use in template
+            ]);
+        }
     }
 
     /** Helper for JSON responses */

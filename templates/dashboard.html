@@ -21,35 +21,100 @@ echo $view->includePartial('partials/header.html', [
         </div>
     </div> -->
 </div>
-
-<!-- Dashboard Content -->
-<p>Welcome back, <?= htmlspecialchars($currentUser['first_name'] ?? $currentUser['username'] ?? 'User') ?>!</p>
-
+    <p>Welcome back, <?= htmlspecialchars($currentUser['first_name'] ?? $currentUser['username'] ?? 'User') ?>!</p>
 <div class="row">
-    <div class="col-md-4">
-        <div class="card text-white bg-primary mb-3">
-            <div class="card-header">Projects</div>
+    <!-- Project Summary Cards -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                Project Summary
+            </div>
             <div class="card-body">
-                <h5 class="card-title"><?= htmlspecialchars($projectCount ?? 0) ?></h5>
-                <p class="card-text">Total projects managed.</p>
-                <a href="/projects" class="btn btn-outline-light btn-sm">View Projects</a>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card text-white bg-primary mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title"><?= htmlspecialchars($totalProjects ?? 0) ?></h5>
+                                <p class="card-text">Total Projects</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card text-white bg-success mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title"><?= htmlspecialchars($activeProjects ?? 0) ?></h5>
+                                <p class="card-text">Active Projects</p>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="col-12">
+                         <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title"><?= $viewHelper->formatCurrency($totalContractAmount) ?></h5>
+                                <p class="card-text">Total Contract Amount (Active Projects)</p>
+                             </div>
+                         </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-         <div class="card text-white bg-success mb-3">
-            <div class="card-header">Active Staff</div>
+
+    <!-- Billing Summary Cards -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                Billing Summary
+            </div>
             <div class="card-body">
-                <h5 class="card-title"><?= htmlspecialchars($activeStaffCount ?? 0) ?></h5>
-                <p class="card-text">Currently active staff members.</p>
-                 <a href="/staff" class="btn btn-outline-light btn-sm">View Staff</a>
+                <div class="row">
+                     <div class="col-md-4">
+                        <div class="card text-white bg-warning mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title"><?= htmlspecialchars($draftBillings ?? 0) ?></h5>
+                                <p class="card-text">Draft Billings</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-white bg-info mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title"><?= htmlspecialchars($submittedBillings ?? 0) ?></h5>
+                                <p class="card-text">Submitted Billings</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-white bg-secondary mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title"><?= htmlspecialchars($approvedBillings ?? 0) ?></h5>
+                                <p class="card-text">Approved Billings</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                         <div class="card bg-light mb-3">
+                             <div class="card-body">
+                                <h5 class="card-title"><?= $viewHelper->formatCurrency($totalCurrentPaymentDue) ?></h5>
+                                <p class="card-text">Total Current Payment Due</p>
+                            </div>
+                         </div>
+                    </div>
+
+                     <div class="col-12">
+                         <div class="card bg-light mb-3">
+                             <div class="card-body">
+                                <h5 class="card-title"><?= $viewHelper->formatCurrency($totalRetainage) ?></h5>
+                                <p class="card-text">Total Retainage</p>
+                            </div>
+                         </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <!-- Add more summary cards as needed -->
 </div>
 
-<!-- Add charts or recent activity sections here -->
 
 <?php
 // Include the footer partial
