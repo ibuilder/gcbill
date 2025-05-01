@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Cost Summary</title>
+</head>
+<body>
+
+    <h1>Project Cost Summary</h1>
+
+    <h2>Project Details</h2>
+    <table>
+        <tr>
+            <th>Project Name</th>
+            <td><?php echo $project['project_name']; ?></td>
+        </tr>
+        <tr>
+            <th>Project Number</th>
+            <td><?php echo $project['project_number']; ?></td>
+        </tr>
+        <tr>
+            <th>Contract Amount</th>
+            <td><?php echo $project['contract_amount']; ?></td>
+        </tr>
+        <tr>
+            <th>GMP Amount</th>
+            <td><?php echo $project['gmp_amount']; ?></td>
+        </tr>
+        <tr>
+            <th>Status</th>
+            <td><?php echo $project['status']; ?></td>
+        </tr>
+    </table>
+
+    <h2>Totals</h2>
+    <table>
+        <tr>
+            <th>Total Billed to Date</th>
+            <td><?php echo $totalBilled; ?></td>
+        </tr>
+        <tr>
+            <th>Total Paid to Date</th>
+            <td><?php echo $totalPaid; ?></td>
+        </tr>
+        <tr>
+            <th>Total Retainage Held</th>
+            <td><?php echo $totalRetainage; ?></td>
+        </tr>
+        <tr>
+            <th>General Conditions Cost</th>
+            <td><?php echo $generalConditionsCost; ?></td>
+        </tr>
+        <tr>
+            <th>Change Orders Amount</th>
+            <td><?php echo $changeOrdersAmount; ?></td>
+        </tr>
+    </table>
+
+</body>
+</html>

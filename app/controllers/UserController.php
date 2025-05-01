@@ -15,11 +15,22 @@ class UserController extends Controller {
 
     public function before()
     {
-        if (!$this->auth->isLoggedIn()) {
-            $this->redirect('/login');
+        // Check if the user is logged in
+        if (!Auth::isLoggedIn()) {
+            // Redirect to the login page if not logged in
+            header('Location: /login');
+            exit;
         }
 
-        return true;
+        // Get the current user from the session
+        $user = $_SESSION['user'];
+
+        // Check if the user has permission to access the current controller and action
+        if (!Auth::checkPermission($user, $this->controller, $this->action)) {
+            // Redirect to a 403 error page if no permission
+            header('Location: /403');
+            exit;
+        }
     }
 
     public function __construct() {
@@ -260,7 +271,14 @@ class UserController extends Controller {
      */
     public function delete(int $id): void {
         $this->before();
-        // Implement
+         if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
+             $_SESSION['flash_error'] = 'Access Denied.';
+             $this->redirect('/dashboard');
+             return;
+         }
+         $this->userModel->delete($id);
+        $_SESSION['flash_success'] = 'User deleted successfully';
+         $this->redirect('/settings/users'); // Redirect to user list
         
     }
 

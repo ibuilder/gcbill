@@ -1,4 +1,3 @@
-php
 <?php
 
 namespace App\Libraries;
@@ -32,16 +31,19 @@ class Auth
         session_start();
         $_SESSION['user_id'] = $user->id;
     }
-
+    
     public static function logout()
     {
         session_start();
         session_unset();
         session_destroy();
     }
-
-    public static function isLoggedIn(): bool {
-        session_start();
-        return isset($_SESSION['user_id']);
+    
+    public static function isLoggedIn(): bool
+    {
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
+        return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
     }
 }

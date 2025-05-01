@@ -1,4 +1,3 @@
-php
 <?php
 
 namespace App\Controllers;
@@ -17,26 +16,28 @@ class ChangeOrderController
         $this->auth = new Auth();
     }
 
-    private function before($action)
+    protected function before()
     {
         // Check if the user is logged in
-        if (!$this->auth->isLoggedIn()) {
-            // Redirect to login page
+        if (!Auth::isLoggedIn()) {
+            // Redirect to the login page if not logged in
             header('Location: /login');
             exit;
         }
 
-        // Check for permissions
-        $user = $this->auth->getCurrentUser();
-        if (!$this->auth->checkPermission($user, 'ChangeOrderController', $action)) {
-            // Redirect to 403 error page
-            header('HTTP/1.1 403 Forbidden');
-            echo "<h1>403 Forbidden</h1>";
+        // Get the current user from the session
+        $user = $_SESSION['user'];
+
+        // Check if the user has permission to access the current controller and action
+        if (!Auth::checkPermission($user, $this->controller, $this->action)) {
+            // Redirect to a 403 error page if no permission
+            header('Location: /403');
             exit;
         }
     }
     public function index($project_id)
     {
+        $this->before();
         // 1. Get the project id from the parameters.
         $projectId = $project_id;
 
@@ -65,6 +66,7 @@ class ChangeOrderController
 
     public function view($id)
     {
+        $this->before();
         // 1. Get the change order ID from the parameters.
         $changeOrderId = $id;
 
@@ -96,6 +98,7 @@ class ChangeOrderController
 
     public function create($data)
     {
+        $this->before();
         // 1. Receive the data in an array as a parameter.
         $changeOrderData = $data;
 
@@ -115,6 +118,7 @@ class ChangeOrderController
    
     public function edit($id, $data)
     {
+        $this->before();
         // 1. Receive the change order id as the first parameter.
         $changeOrderId = $id;
 
@@ -143,6 +147,7 @@ class ChangeOrderController
     
     public function delete($id)
     {
+        $this->before();
         // 1. Receive the change order id as a parameter.
         $changeOrderId = $id;
 
@@ -167,7 +172,6 @@ class ChangeOrderController
     {
         // Check if the requested action is valid
         if (method_exists($this, $method)) {
-             $this->before($method);
 
             return call_user_func_array([$this, $method], $args);
         } else {

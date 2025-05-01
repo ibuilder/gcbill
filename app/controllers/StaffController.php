@@ -26,14 +26,23 @@ class StaffController extends Controller {
         
     }
     
-    public function before(): void {
-        if (!$this->auth->isLoggedIn()) {
-            $this->redirect('/login');
+     protected function before()
+    {
+        // Check if the user is logged in
+        if (!Auth::isLoggedIn()) {
+            // Redirect to the login page if not logged in
+            header('Location: /login');
+            exit;
         }
+
+        // Get the current user from the session
         $user = $_SESSION['user'];
-        
-        if(!$this->auth->checkPermission($user, 'StaffController', $this->action)){
-            $this->redirect('/403');
+
+        // Check if the user has permission to access the current controller and action
+        if (!Auth::checkPermission($user, $this->controller, $this->action)) {
+            // Redirect to a 403 error page if no permission
+            header('Location: /403');
+            exit;
         }
     }
 

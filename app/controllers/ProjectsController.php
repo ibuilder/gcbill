@@ -16,14 +16,20 @@ class ProjectsController
         $this->auth = new Auth();
     }
 
-    public function before($action)
+    protected function before()
     {
-        $user = $this->auth->getCurrentUser();
-        if (!$user) {
+        // Check if the user is logged in
+        if (!Auth::isLoggedIn()) {
+            // Redirect to the login page if not logged in
             header('Location: /login');
             exit;
         }
-        if (!$this->auth->checkPermission($user, 'ProjectsController', $action)) {
+
+        // Get the current user from the session
+        $user = $_SESSION['user'];
+
+        // Check if the user has permission to access the current controller and action
+        if (!Auth::checkPermission($user, $this->controller, $this->action)) {
             header('Location: /403');
             exit;
         }
@@ -31,7 +37,7 @@ class ProjectsController
 
     public function index()
     {
-        $this->before('index');
+        $this->before();
         $projects = Project::all();
         include(__DIR__ . '/../../templates/projects/index.html');
     }
@@ -46,7 +52,7 @@ class ProjectsController
 
     public function create($data = [])
     {
-        $this->before('create');
+        $this->before();
         $project = new Project();
         foreach ($data as $key => $value) {
             $project->$key = $value;
@@ -57,7 +63,7 @@ class ProjectsController
 
     public function edit($id, $data = [])
     {
-        $this->before('edit');
+        $this->before();
         $project = Project::find($id);
         foreach ($data as $key => $value) {
             $project->$key = $value;
@@ -68,7 +74,7 @@ class ProjectsController
 
     public function delete($id)
     {
-        $this->before('delete');
+        $this->before();
         $project = Project::find($id);
         $project->delete();
         return "{$project->id}";

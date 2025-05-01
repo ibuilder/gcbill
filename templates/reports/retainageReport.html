@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retainage Report</title>
+</head>
+<body>
+    <h1>Retainage Report</h1>
+
+    <h2>Project Details</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Project Number</th>
+                <th>Project Name</th>
+                <th>Contract Amount</th>
+                <th>Retainage Percentage</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><?= $project['project_number'] ?></td>
+                <td><?= $project['project_name'] ?></td>
+                <td><?= $project['contract_amount'] ?></td>
+                <td><?= $project['retainage_percentage'] ?>%</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Retainage Summary</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Total Retainage Held to Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><?= $totalRetainage ?></td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>

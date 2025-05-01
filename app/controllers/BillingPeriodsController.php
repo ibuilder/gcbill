@@ -10,12 +10,19 @@ class BillingPeriodsController extends Controller
 {
     public function before()
     {
-        $auth = new Auth();
-        if (!$auth->isLoggedIn()) {
+        // Check if the user is logged in
+        if (!Auth::isLoggedIn()) {
+            // Redirect to the login page if not logged in
             header('Location: /login');
             exit;
         }
-        if (!$auth->checkPermission($_SESSION['user'], get_class($this), $this->action)) {
+
+        // Get the current user from the session
+        $user = $_SESSION['user'];
+
+        // Check if the user has permission to access the current controller and action
+        if (!Auth::checkPermission($user, $this->controller, $this->action)) {
+            // Redirect to a 403 error page if no permission
             header('Location: /403');
             exit;
         }
@@ -59,4 +66,5 @@ class BillingPeriodsController extends Controller
         $billingPeriod->delete();
         return json_encode(['id' => $id]);
     }
+    protected $controller = 'BillingPeriodsController';
 }

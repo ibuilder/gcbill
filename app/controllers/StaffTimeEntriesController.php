@@ -9,18 +9,20 @@ class StaffTimeEntriesController extends Controller
 {
     public function before()
     {
-        $auth = new Auth();
-        $user = $auth->getCurrentUser();
-        if (!$user) {
+        // Check if the user is logged in
+        if (!Auth::isLoggedIn()) {
+            // Redirect to the login page if not logged in
             header('Location: /login');
             exit;
         }
-        $controller = str_replace('Controller', '', get_class($this));
-        $action = $this->route_params['action'];
 
-        if (!$auth->checkPermission($user, $controller, $action)) {
-            http_response_code(403);
-            echo "<h1>403 Forbidden</h1>";
+        // Get the current user from the session
+        $user = $_SESSION['user'];
+
+        // Check if the user has permission to access the current controller and action
+        if (!Auth::checkPermission($user, $this->controller, $this->action)) {
+            // Redirect to a 403 error page if no permission
+            header('Location: /403');
             exit;
         }
     }

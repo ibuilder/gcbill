@@ -9,19 +9,21 @@ use App\Models\Project;
 
 class ScheduleOfValuesController extends BaseController
 {
-    public function before()
+    protected function before()
     {
-        $auth = new Auth();
-        $user = $auth->getLoggedUser();
-        if (!$user) {
+        // Check if the user is logged in
+        if (!Auth::isLoggedIn()) {
+            // Redirect to the login page if not logged in
             header('Location: /login');
             exit;
         }
 
-        $controller = get_class($this);
-        $action = $this->current_action;
+        // Get the current user from the session
+        $user = $_SESSION['user'];
 
-        if (!$auth->checkPermission($user, $controller, $action)) {
+        // Check if the user has permission to access the current controller and action
+        if (!Auth::checkPermission($user, $this->controller, $this->action)) {
+            // Redirect to a 403 error page if no permission
             header('Location: /403');
             exit;
         }
