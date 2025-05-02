@@ -24,7 +24,7 @@ class Project {
      * @param int $id
      * @return array|null Project data or null if not found
      */
-    public function findById(int $id): ?array {
+    public function find(int $id): ?array {
         // Join with owners table to get owner name
         $query = "SELECT p.*, o.owner_name
                   FROM projects p
@@ -39,7 +39,7 @@ class Project {
      * @param string $orderDir Direction (ASC or DESC)
      * @return array List of projects
      */
-    public function findAll(string $orderBy = 'project_number', string $orderDir = 'ASC'): array {
+    public function all(string $orderBy = 'project_number', string $orderDir = 'ASC'): array {
         // Basic validation for order columns/direction
         $allowedOrderBy = ['id', 'project_number', 'project_name', 'start_date', 'status', 'updated_at'];
         $orderBy = in_array($orderBy, $allowedOrderBy) ? $orderBy : 'project_number';
@@ -57,12 +57,16 @@ class Project {
      * @param array $data Project data
      * @return string|false Last insert ID or false on failure
      */
-    public function create(array $data): string|false {
+    public function insert(array $data): string|false {
         $filteredData = $this->filterFillable($data);
         // Add validation here or in the controller
         if (empty($filteredData['project_number']) || empty($filteredData['project_name'])) {
             // Basic required field check
             error_log("Project creation failed: Missing required fields (number or name).");
+            return false;
+        }
+        if ($this->projectNumberExists($filteredData['project_number'])) {
+            error_log("Project creation failed: Project number already exists.");
             return false;
         }
         // Set default status if not provided
@@ -95,7 +99,7 @@ class Project {
      * @param int $id Project ID
      * @return int Number of affected rows or -1 on error
      */
-    public function delete(int $id): int {
+    public function remove(int $id): int {
         // Consider related data (billings, SOV etc.) - cascade delete or prevent deletion?
         // Foreign key constraints handle some of this (ON DELETE CASCADE/SET NULL)
         return $this->db->delete('projects', 'id = ?', [$id]);
