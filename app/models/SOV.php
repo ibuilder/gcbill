@@ -4,7 +4,36 @@ namespace App\Models;
 
 use App\Database;
 
-class SOV {
+class SOV extends Model
+{
+    protected static string $tableName = 'schedule_of_values'; // Assuming table name
+
+    // Define expected properties (optional)
+    public ?int $id = null;
+    public ?int $project_id = null;
+    public ?string $item_number = null; // Or int if always numeric
+    public ?string $description = null;
+    public ?float $scheduled_value = null;
+    // Add other relevant SOV fields (e.g., cost_code)
+    public ?string $created_at = null;
+    public ?string $updated_at = null;
+
+    // Override save to handle timestamps automatically
+    public function save(): bool
+    {
+        $now = date('Y-m-d H:i:s');
+        if (!isset($this->attributes[static::$primaryKey]) || empty($this->attributes[static::$primaryKey])) {
+            // Inserting
+            if (!isset($this->attributes['created_at'])) {
+                $this->setAttribute('created_at', $now);
+            }
+        }
+        // Always set updated_at on save
+        $this->setAttribute('updated_at', $now);
+
+        return parent::save();
+    }
+
     private Database $db;
     private array $fillable = ['project_id', 'item_number', 'description', 'scheduled_value'];
 

@@ -1,25 +1,24 @@
 <?php
-// filepath: c:\Users\iphoe\OneDrive\Documents\Server\construction-billing\production\construction-billing-app\app\Controllers\ProjectController.php
-<?php
 
 namespace App\Controllers;
 
-use App\Controller;
+use App\Database;
 use App\Models\Project;
 use App\Models\Owner; // Need Owner model to populate dropdown
 use App\Helpers\SecurityHelper;
-// Use ValidationHelper later
+// Use ValidationHelper later if created
 
-class ProjectController extends Controller {
+class ProjectController extends BaseController
+{
+    protected string $controllerName = 'Project'; // For permissions
 
     private Project $projectModel;
     private Owner $ownerModel;
 
-    public function __construct() {
-        parent::__construct();
-        if (!$this->auth->isLoggedIn()) { // Ensure user is logged in
-            $this->redirect('/login');
-        }
+    public function __construct(Database $db, array $config = [])
+    {
+        parent::__construct($db, $config);
+        // Auth check is handled by BaseController or requirePermission()
         $this->projectModel = new Project($this->db);
         $this->ownerModel = new Owner($this->db); // Instantiate Owner model
     }
@@ -27,9 +26,13 @@ class ProjectController extends Controller {
     /**
      * Display a list of projects.
      */
-    public function index(): void {
-        $projects = $this->projectModel->findAll();
-        $this->view->output('projects/list.html', [
+    public function index(): void
+    {
+        $this->actionName = 'index';
+        $this->requirePermission();
+
+        $projects = $this->projectModel->findAllWithOwners(); // Get owner name too
+        $this->render('project/list', [ // Use .php
             'pageTitle' => 'Projects',
             'activeNav' => 'projects',
             'projects' => $projects
@@ -39,84 +42,102 @@ class ProjectController extends Controller {
     /**
      * Show the form for creating a new project.
      */
-    public function create(): void {
+    public function create(): void
+    {
+        $this->actionName = 'create';
+        $this->requirePermission();
+
         $owners = $this->ownerModel->findAllSimple(); // Get owners for dropdown
-        $this->view->output('projects/create.html', [
+        $this->render('project/create', [ // Use .php
             'pageTitle' => 'Create New Project',
             'activeNav' => 'projects',
             'owners' => $owners,
-            'project' => [], // Empty array for form partial compatibility
+            'project' => $_SESSION['form_data'] ?? [], // Repopulate form
+            'errors' => $_SESSION['errors'] ?? [],
             'formAction' => '/projects/store' // Action for the form
         ]);
+        unset($_SESSION['form_data'], $_SESSION['errors']);
     }
 
     /**
      * Store a newly created project in storage.
      */
-    public function store(): void {
-        // CSRF Check
-        $submittedToken = $_POST[SecurityHelper::getFormInputName()] ?? null;
-        if (!SecurityHelper::validateToken($submittedToken)) {
-            $_SESSION['flash_error'] = 'Invalid request. Please try again.';
+    public function store(): void
+    {
+        $this->actionName = 'store'; // Map to 'create' permission
+        $this->requirePermission();
+
+        if (!$this->checkCsrf('/projects/create')) return;
+
+        $data = $_POST['project'] ?? []; // Assuming form fields like project[project_name]
+        $errors = [];
+
+        // --- Validation ---
+        if (empty($data['project_number'])) $errors['project_number'] = 'Project Number is required.';
+        elseif ($this->projectModel->projectNumberExists($data['project_number'])) $errors['project_number'] = 'Project Number already exists.';
+        if (empty($data['project_name'])) $errors['project_name'] = 'Project Name is required.';
+        if (empty($data['owner_id'])) $errors['owner_id'] = 'Owner is required.';
+        // Add more validation (dates, amounts, etc.)
+        // --- End Validation ---
+
+        if (!empty($errors)) {
+            $_SESSION['form_data'] = $data;
+            $_SESSION['errors'] = $errors;
+            $this->setFlashMessage('error', 'Please correct the errors below.');
             $this->redirect('/projects/create');
             return;
         }
 
-        // TODO: Add robust validation (required fields, types, uniqueness)
-        $data = $_POST; // Get all POST data
+        // Prepare data (ensure types, nulls)
+        $projectData = $this->prepareProjectData($data);
 
-        // Basic Validation Example
-        if (empty($data['project_number']) || empty($data['project_name'])) {
-            $_SESSION['flash_error'] = 'Project Number and Project Name are required.';
-            $_SESSION['form_data'] = $data; // Store submitted data to repopulate form
-            $this->redirect('/projects/create');
-            return;
-        }
-        if ($this->projectModel->projectNumberExists($data['project_number'])) {
-             $_SESSION['flash_error'] = 'Project Number already exists.';
-             $_SESSION['form_data'] = $data;
-             $this->redirect('/projects/create');
-             return;
-        }
 
-        if ($this->projectModel->create($data)) {
-            $_SESSION['flash_success'] = 'Project created successfully.';
-            unset($_SESSION['form_data']); // Clear form data on success
+        if ($this->projectModel->create($projectData)) {
+            $this->setFlashMessage('success', 'Project created successfully.');
             $this->redirect('/projects');
         } else {
-            $_SESSION['flash_error'] = 'Failed to create project.';
             $_SESSION['form_data'] = $data;
+            $this->setFlashMessage('error', 'Failed to create project.');
             $this->redirect('/projects/create');
         }
     }
 
     /**
-     * Display the specified project (optional view).
+     * Display the specified project.
      */
-    public function view(int $id): void {
-        $project = $this->projectModel->findById($id);
+    public function view(int $id): void
+    {
+        $this->actionName = 'view';
+        $this->requirePermission();
+
+        $project = $this->projectModel->findByIdWithOwners($id); // Get owner name
         if (!$project) {
-            $_SESSION['flash_error'] = 'Project not found.';
+            $this->setFlashMessage('error', 'Project not found.');
             $this->redirect('/projects');
             return;
         }
 
-        // Potentially load related data (SOV, Billings, etc.) here
+        // Potentially load related data summary (SOV total, Billings count) here if needed for view
 
-        $this->view->output('projects/view.html', [
+        $this->render('project/view', [ // Use .php
             'pageTitle' => 'View Project: ' . htmlspecialchars($project['project_name']),
             'activeNav' => 'projects',
             'project' => $project
+            // Pass related summary data if loaded
         ]);
     }
 
     /**
      * Show the form for editing the specified project.
      */
-    public function edit(int $id): void {
+    public function edit(int $id): void
+    {
+        $this->actionName = 'edit';
+        $this->requirePermission();
+
         $project = $this->projectModel->findById($id);
         if (!$project) {
-            $_SESSION['flash_error'] = 'Project not found.';
+            $this->setFlashMessage('error', 'Project not found.');
             $this->redirect('/projects');
             return;
         }
@@ -126,12 +147,15 @@ class ProjectController extends Controller {
         // Use session data if validation failed on update attempt
         $formData = $_SESSION['form_data'] ?? $project;
         unset($_SESSION['form_data']);
+        $errors = $_SESSION['errors'] ?? [];
+        unset($_SESSION['errors']);
 
-        $this->view->output('projects/edit.html', [
+        $this->render('project/edit', [ // Use .php
             'pageTitle' => 'Edit Project: ' . htmlspecialchars($project['project_name']),
             'activeNav' => 'projects',
             'project' => $formData, // Use potentially repopulated data
             'owners' => $owners,
+            'errors' => $errors,
             'formAction' => '/projects/update/' . $id // Action for the form
         ]);
     }
@@ -139,46 +163,48 @@ class ProjectController extends Controller {
     /**
      * Update the specified project in storage.
      */
-    public function update(int $id): void {
-        // CSRF Check
-        $submittedToken = $_POST[SecurityHelper::getFormInputName()] ?? null;
-        if (!SecurityHelper::validateToken($submittedToken)) {
-            $_SESSION['flash_error'] = 'Invalid request. Please try again.';
-            $this->redirect('/projects/edit/' . $id);
-            return;
-        }
+    public function update(int $id): void
+    {
+        $this->actionName = 'update'; // Map to 'edit' permission
+        $this->requirePermission();
+
+        if (!$this->checkCsrf('/projects/edit/' . $id)) return;
 
         $project = $this->projectModel->findById($id);
         if (!$project) {
-            $_SESSION['flash_error'] = 'Project not found.';
+            $this->setFlashMessage('error', 'Project not found.');
             $this->redirect('/projects');
             return;
         }
 
-        // TODO: Add robust validation
-        $data = $_POST;
+        $data = $_POST['project'] ?? [];
+        $errors = [];
 
-         // Basic Validation Example
-        if (empty($data['project_number']) || empty($data['project_name'])) {
-            $_SESSION['flash_error'] = 'Project Number and Project Name are required.';
-            $_SESSION['form_data'] = $data; // Store submitted data
+        // --- Validation ---
+        if (empty($data['project_number'])) $errors['project_number'] = 'Project Number is required.';
+        elseif ($this->projectModel->projectNumberExists($data['project_number'], $id)) $errors['project_number'] = 'Project Number already exists.';
+        if (empty($data['project_name'])) $errors['project_name'] = 'Project Name is required.';
+        if (empty($data['owner_id'])) $errors['owner_id'] = 'Owner is required.';
+        // Add more validation
+        // --- End Validation ---
+
+        if (!empty($errors)) {
+            $_SESSION['form_data'] = $data;
+            $_SESSION['errors'] = $errors;
+            $this->setFlashMessage('error', 'Please correct the errors below.');
             $this->redirect('/projects/edit/' . $id);
             return;
         }
-         if ($this->projectModel->projectNumberExists($data['project_number'], $id)) {
-             $_SESSION['flash_error'] = 'Project Number already exists.';
-             $_SESSION['form_data'] = $data;
-             $this->redirect('/projects/edit/' . $id);
-             return;
-        }
 
-        if ($this->projectModel->update($id, $data) >= 0) { // Check >= 0 because 0 rows affected is not an error
-            $_SESSION['flash_success'] = 'Project updated successfully.';
-             unset($_SESSION['form_data']);
-            $this->redirect('/projects/view/' . $id); // Redirect to view or list
+        // Prepare data (ensure types, nulls)
+        $projectData = $this->prepareProjectData($data);
+
+        if ($this->projectModel->update($id, $projectData) >= 0) { // Check >= 0
+            $this->setFlashMessage('success', 'Project updated successfully.');
+            $this->redirect('/projects/view/' . $id); // Redirect to view
         } else {
-            $_SESSION['flash_error'] = 'Failed to update project.';
             $_SESSION['form_data'] = $data;
+            $this->setFlashMessage('error', 'Failed to update project.');
             $this->redirect('/projects/edit/' . $id);
         }
     }
@@ -187,28 +213,59 @@ class ProjectController extends Controller {
      * Remove the specified project from storage.
      * Assumes POST request for deletion for CSRF protection.
      */
-    public function delete(int $id): void {
-         // CSRF Check
-        $submittedToken = $_POST[SecurityHelper::getFormInputName()] ?? null;
-        if (!SecurityHelper::validateToken($submittedToken)) {
-            $_SESSION['flash_error'] = 'Invalid request. Please try again.';
-            $this->redirect('/projects');
-            return;
-        }
+    public function delete(int $id): void
+    {
+        $this->actionName = 'delete';
+        $this->requirePermission();
+
+        // Use POST for delete, check CSRF
+        if (!$this->checkCsrf('/projects')) return; // Redirect to list on CSRF fail
 
         $project = $this->projectModel->findById($id);
         if (!$project) {
-            $_SESSION['flash_error'] = 'Project not found.';
+            $this->setFlashMessage('error', 'Project not found.');
             $this->redirect('/projects');
             return;
         }
 
-        if ($this->projectModel->delete($id) > 0) {
-            $_SESSION['flash_success'] = 'Project deleted successfully.';
+        // Optional: Check for related records before deleting
+        // if ($this->projectModel->hasRelatedBillings($id) || $this->projectModel->hasRelatedSov($id)) {
+        //     $this->setFlashMessage('error', 'Cannot delete project with existing billings or SOV items.');
+        //     $this->redirect('/projects');
+        //     return;
+        // }
+
+        if ($this->projectModel->delete($id)) {
+            $this->setFlashMessage('success', 'Project deleted successfully.');
         } else {
-            // Check foreign key constraints or other reasons for failure
-            $_SESSION['flash_error'] = 'Failed to delete project. It might have related records (billings, SOV, etc.).';
+            $this->setFlashMessage('error', 'Failed to delete project.');
         }
         $this->redirect('/projects');
+    }
+
+    /**
+     * Helper to prepare project data for DB insert/update.
+     */
+    private function prepareProjectData(array $data): array
+    {
+        // Ensure correct types and handle empty strings for nullable fields
+        return [
+            'project_number' => trim($data['project_number'] ?? ''),
+            'project_name' => trim($data['project_name'] ?? ''),
+            'owner_id' => isset($data['owner_id']) && $data['owner_id'] !== '' ? (int)$data['owner_id'] : null,
+            'address_line1' => trim($data['address_line1'] ?? '') ?: null,
+            'address_line2' => trim($data['address_line2'] ?? '') ?: null,
+            'city' => trim($data['city'] ?? '') ?: null,
+            'state' => trim($data['state'] ?? '') ?: null,
+            'zip_code' => trim($data['zip_code'] ?? '') ?: null,
+            'status' => trim($data['status'] ?? 'active'), // Default status
+            'start_date' => !empty($data['start_date']) ? date('Y-m-d', strtotime($data['start_date'])) : null,
+            'completion_date' => !empty($data['completion_date']) ? date('Y-m-d', strtotime($data['completion_date'])) : null,
+            'contract_amount' => isset($data['contract_amount']) && $data['contract_amount'] !== '' ? (float)$data['contract_amount'] : null,
+            'gmp_amount' => isset($data['gmp_amount']) && $data['gmp_amount'] !== '' ? (float)$data['gmp_amount'] : null,
+            'gc_fee_percentage' => isset($data['gc_fee_percentage']) && $data['gc_fee_percentage'] !== '' ? (float)$data['gc_fee_percentage'] : null,
+            'retainage_percentage' => isset($data['retainage_percentage']) && $data['retainage_percentage'] !== '' ? (float)$data['retainage_percentage'] : null,
+            // Add other fields as needed
+        ];
     }
 }

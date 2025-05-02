@@ -1,192 +1,126 @@
 <?php
 
-namespace AppControllers;
-use App\Controllers\BaseController;
-use App\View; 
+namespace App\Controllers; // Correct namespace
+
 use App\Database;
-use App\Models\Project; 
-use App\Models\BillingPeriod; 
-use App\Models\SOV as SovBillingItem; 
-use App\Models\GeneralCondition; 
-use App\Models\ChangeOrder; 
-use App\Models\Staff; 
-use App\Models\StaffTimeEntry; 
-class ReportController extends BaseController 
+use App\Models\Project;
+use App\Models\Billing; // Assuming Billing model handles periods/details
+use App\Models\Staff;
+use App\Models\StaffTimeEntry;
+// Add other models as needed: ChangeOrder, GeneralCondition, etc.
+
+class ReportController extends BaseController
 {
+    protected string $controllerName = 'Report'; // For permissions
 
-    private $db;
-    private $view;
+    // Models can be loaded via loadModel() or instantiated here if always needed
+    private Project $projectModel;
+    private Billing $billingModel;
+    private Staff $staffModel;
+    private StaffTimeEntry $timeEntryModel;
 
-    public function __construct(Database $db)
+    public function __construct(Database $db, array $config = [])
     {
-        $this->db = $db;
-        $this->view = new View();
+        parent::__construct($db, $config);
+        // Instantiate models
+        $this->projectModel = new Project($this->db);
+        $this->billingModel = new Billing($this->db); // Assuming Billing model exists
+        $this->staffModel = new Staff($this->db);
+        $this->timeEntryModel = new StaffTimeEntry($this->db); // Assuming model exists
     }
 
-    public function projectCostSummary($projectId)
+    // Example: Project Cost Summary Report (needs more detailed data fetching)
+    public function projectCostSummary(): void // Removed $projectId, maybe filter via GET?
     {
-        $this->before();
+        $this->actionName = 'projectCostSummary';
+        $this->requirePermission();
 
+        // TODO: Implement filtering (e.g., by project status, date range) via GET parameters
+        // TODO: Fetch comprehensive cost data for each project
+        // This likely requires complex queries or multiple model calls per project
+        // - Original Budget (from project)
+        // - Approved Changes (sum from change orders)
+        // - Current Budget
+        // - Committed Costs (from purchase orders, subcontracts - requires models)
+        // - Actual Costs to Date (sum from expenses, time entries, etc. - requires models)
+        // - Projected Costs (complex calculation)
+        // - Variance
 
-        // Load the models
-        $projectModel = new Project($this->db);
-        $billingPeriodModel = new BillingPeriod($this->db);
-        $sovBillingItemModel = new SovBillingItem($this->db);
-        $generalConditionModel = new GeneralCondition($this->db);
-        $changeOrderModel = new ChangeOrder($this->db);
+        $projects = $this->projectModel->findAllWithCostSummary(); // Ideal: Model method aggregates data
 
-        // Get the project data
-        $project = $projectModel->find($projectId);
-        if (!$project) {
-            // Handle project not found (e.g., redirect to an error page)
-            //header('Location: /404');
-            exit;
-        }
-
-        // Get billing periods for the project
-        $billingPeriods = $billingPeriodModel->where('project_id', $projectId)->get();
-
-        // Calculate total billed and retainage
-        $totalBilled = 0;
-        $totalRetainage = 0;
-        foreach ($billingPeriods as $period) {
-            $billedItems = $sovBillingItemModel->where('billing_period_id', $period['id'])->get();
-            foreach ($billedItems as $item) {
-                $totalBilled += ($item['work_completed_this_period'] + $item['materials_stored_this_period']);
-            }
-
-            $totalRetainage += $totalBilled * ($project['retainage_percentage'] / 100);
-        }
-
-        // Get general conditions for the project
-        $generalConditions = $generalConditionModel->where('project_id', $projectId)->get();
-        $totalGeneralConditionsCost = array_sum(array_column($generalConditions, 'actual_cost_to_date'));
-
-        // Get change orders for the project
-        $changeOrders = $changeOrderModel->where('project_id', $projectId)->get(); 
-        $totalChangeOrdersAmount= 0;
-        foreach ($changeOrders as $order) {
-            $totalChangeOrdersAmount += $order['amount'];
-        }
-
-        $data = compact('project', 'totalBilled', 'totalRetainage', 'totalGeneralConditionsCost', 'totalChangeOrdersAmount');
-
-        // Pass the data to the view
-        $this->view->render('reports/projectCostSummary.html', $data);
-
+        $this->render('reports/projectCostSummary', [ // Use .php
+            'pageTitle' => 'Project Cost Summary Report',
+            'activeNav' => 'report-cost-summary',
+            'reportData' => $projects // Pass the aggregated data
+        ]);
     }
 
-    public function billingsPerProject($projectId)
+    // Example: Billings Per Project Report
+    public function billingsPerProject(): void // Removed $projectId, show all or filter?
     {
-        $this->before();
+        $this->actionName = 'billingsPerProject';
+        $this->requirePermission();
 
-        // Load the models
-        $projectModel = new Project($this->db);
-        $billingPeriodModel = new BillingPeriod($this->db);
-        $sovBillingItemModel = new SovBillingItem($this->db);
+        // TODO: Implement filtering (project, date range) via GET parameters
 
-        // Get the project data
-        $project = $projectModel->find($projectId);
-        if (!$project) {
-            // Handle project not found (e.g., redirect to an error page)
-            //header('Location: /404');
-            exit;
-        }
+        // Fetch projects and their associated billings
+        // This might involve joining tables or multiple queries
+        $reportData = $this->projectModel->findAllWithBillingsSummary(); // Ideal: Model method aggregates
 
-        // Get billing periods for the project
-        $billingPeriods = $billingPeriodModel->where('project_id', $projectId)->get();
-
-        $billingsData = [];
-        // Calculate total billed and retainage
-        foreach ($billingPeriods as $period) {
-            $billedItems = $sovBillingItemModel->where('billing_period_id', $period['id'])->get();
-            $totalBilled = 0;
-            foreach ($billedItems as $item) {
-                $totalBilled += ($item['work_completed_this_period'] + $item['materials_stored_this_period']);
-            }
-            $billingsData[] = [
-                'period' => $period,
-                'billed_amount' => $totalBilled
-            ];
-        }
-
-        $data = compact('project', 'billingsData');
-        // Pass the data to the view
-        $this->view->render('reports/billingsPerProject.html', $data);
+        $this->render('reports/billingsPerProject', [ // Use .php
+            'pageTitle' => 'Billings Per Project Report',
+            'activeNav' => 'report-billings-project',
+            'reportData' => $reportData // Should be structured as [ProjectName => [BillingInfo...]]
+        ]);
     }
 
-    public function retainageReport($projectId)
+    // Example: Retainage Report
+    public function retainageReport(): void // Removed $projectId, show all or filter?
     {
-        $this->before();
-        // Load the models
-        $projectModel = new Project($this->db);
-        $billingPeriodModel = new BillingPeriod($this->db);
+        $this->actionName = 'retainageReport';
+        $this->requirePermission();
 
-        // Get the project data
-        $project = $projectModel->find($projectId);
-        if (!$project) {
-            // Handle project not found (e.g., redirect to an error page)
-            //header('Location: /404');
-            exit;
-        }
+        // TODO: Implement filtering (project, date range) via GET parameters
 
-        // Get billing periods for the project
-        $billingPeriods = $billingPeriodModel->where('project_id', $projectId)->get();
+        // Fetch projects and calculate retainage held/released
+        // Requires querying projects and billings, potentially payments
+        $reportData = $this->projectModel->findAllWithRetainageSummary(); // Ideal: Model method aggregates
 
-        $totalBilled = 0;
-        $totalRetainage = 0;
-        foreach ($billingPeriods as $period) {
-            $billedItems = (new SovBillingItem())->where('billing_period_id', $period['id'])->get();
-            foreach ($billedItems as $item) {
-                $totalBilled += ($item['work_completed_this_period'] + $item['materials_stored_this_period']);
-            }
-        }
-
-        $totalRetainage = $totalBilled * ($project['retainage_percentage'] / 100);
-
-        $data = compact('project', 'totalBilled', 'totalRetainage');
-        // Pass the data to the view
-        $this->view->render('reports/retainageReport.html', $data);
+        $this->render('reports/retainageReport', [ // Use .php
+            'pageTitle' => 'Retainage Report',
+            'activeNav' => 'report-retainage',
+            'reportData' => $reportData
+        ]);
     }
 
-    public function staffTimeTracking($projectId, $startDate, $endDate)
+    // Example: Staff Time Tracking Report
+    public function staffTimeTracking(): void // Removed params, use GET for filtering
     {
-        $this->before();
+        $this->actionName = 'staffTimeTracking';
+        $this->requirePermission();
 
-        // Load the models
-        $projectModel = new Project($this->db);
-        $staffModel = new Staff($this->db);
-        $staffTimeEntryModel = new StaffTimeEntry();
+        // Get filter parameters from GET request
+        $filters = [
+            'project_id' => filter_input(INPUT_GET, 'project_id', FILTER_VALIDATE_INT) ?: null,
+            'staff_id' => filter_input(INPUT_GET, 'staff_id', FILTER_VALIDATE_INT) ?: null,
+            'start_date' => filter_input(INPUT_GET, 'start_date') ?: null,
+            'end_date' => filter_input(INPUT_GET, 'end_date') ?: null,
+        ];
 
-        // Get the project data
-        $project = $projectModel->find($projectId);
-        if (!$project) {
-            // Handle project not found (e.g., redirect to an error page)
-            // header('Location: /404');
-            exit;
-        }
+        // Fetch time entries based on filters
+        $timeEntries = $this->timeEntryModel->findWithDetailsByFilters($filters); // Model method handles filtering and joins
 
-        // Get the staff members
-        $staffMembers = $staffModel->all();
-        
-        // Get staff time entries for the project and date range        
-        $timeEntries = $staffTimeEntryModel
-        ->where('project_id', $projectId)
-        ->where('entry_date', '>=', $startDate)
-        ->where('entry_date', '<=', $endDate)
-        ->get();
+        // Fetch data for filter dropdowns
+        $projects = $this->projectModel->findAllSimple(); // id, name
+        $staffMembers = $this->staffModel->findAllSimple(); // id, name
 
-        $staffData = [];
-        foreach ($staffMembers as $staff) {
-            $staffData[] = [
-                'staff' => $staff,
-                'time_entries' => array_filter($timeEntries, fn ($entry) => $entry['staff_id'] === $staff['id'])
-            ];
-        }
-        $data = compact('project', 'staffData', 'startDate', 'endDate');
-        // Pass the data to the view
-        $this->view->render('reports/staffTimeTracking.html', $data);
-
-    }    
-
+        $this->render('reports/staffTimeTracking', [ // Use .php
+            'pageTitle' => 'Staff Time Tracking Report',
+            'activeNav' => 'report-time-tracking',
+            'reportData' => $timeEntries,
+            'filters' => $filters, // Pass filters back to view
+            'projects' => $projects,
+            'staffMembers' => $staffMembers
+        ]);
+    }
 }

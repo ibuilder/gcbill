@@ -1,30 +1,31 @@
-/construction-billing
-├── index.php                  # Application entry point
-├── README.md                  # Project documentation
-├── composer.json              # PHP dependencies
-├── .htaccess                  # URL rewriting and security
-├── config/                    # Configuration files
-│   ├── config.php             # Main configuration
-│   ├── database.php           # Database connection settings
-│   └── routes.php             # Application routes
-├── app/                       # Application core files
-│   ├── bootstrap.php          # Application bootstrapper
-│   ├── controllers/           # Controller classes
-│   ├── models/                # Data models
-│   ├── helpers/               # Helper functions
-│   └── libraries/             # Custom libraries
-├── public/                    # Publicly accessible files
-│   ├── css/                   # CSS files
-│   ├── js/                    # JavaScript files
-│   ├── img/                   # Image files
-│   └── uploads/               # User uploaded files
-├── templates/                 # HTML templates
-│   ├── partials/              # Reusable page components
-│   ├── dashboard.html         # Main dashboard
-│   ├── staff/                 # Staff management templates
-│   ├── owners/                # Owner management templates
-│   ├── general-conditions/    # General conditions templates
-│   ├── gmp/                   # GMP management templates
-│   ├── aia/                   # AIA document templates
-│   └── settings/              # Application settings
-└── database/                  # Database files and migrations
+<?php
+
+namespace App\Helpers;
+
+use App\Libraries\PDFExport; // Use the library
+
+class PDFHelper {
+
+    /**
+     * Generates a PDF from HTML content using the PDFExport library.
+     *
+     * @param string $htmlContent HTML to convert.
+     * @param string $filename Desired filename.
+     * @param string $outputMode 'I' (inline), 'D' (download), etc.
+     * @return mixed Output depends on the library and mode.
+     * @throws \Exception If library fails.
+     */
+    public static function createFromHtml(string $htmlContent, string $filename = 'document.pdf', string $outputMode = 'D') {
+        try {
+            return PDFExport::generateFromHtml($htmlContent, $filename, $outputMode);
+        } catch (\Exception $e) {
+            // Log the error or handle it appropriately
+            error_log("PDFHelper Error: " . $e->getMessage());
+            // Optionally re-throw or display a user-friendly error
+            throw $e; // Re-throw for controller to handle
+        }
+    }
+
+    // Add other specific PDF helper methods if needed
+    // e.g., public static function generateInvoicePdf(...) { ... }
+}

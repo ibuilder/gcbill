@@ -1,73 +1,61 @@
 <?php
 
-namespace App\Controllers; // This was correct and must be App\Controllers
+namespace App\Controllers;
 
 use App\Libraries\Auth;
 use App\Helpers\SecurityHelper;
 use App\Models\User;
 use App\Database;
 
-class UserController extends BaseController {
-    
-    private $userModel;
-    private const USERS_CONTROLLER = 'UserController';
+class UserController extends BaseController
+{
+    private User $userModel;
+    protected string $controllerName = 'User';
 
-    public function __construct(Database $db)
+    public function __construct(Database $db, array $config = [])
     {
-        parent::__construct($db);
+        parent::__construct($db, $config);
         $this->userModel = new User($this->db);
     }
 
-        // Get the current user from the session
-        // $user = $_SESSION['user']; // this var is not used
-
-        // Check if the user has permission to access the current controller and action
-        if (!Auth::checkPermission($user, $this->controller, $this->action)) {
-            // Redirect to a 403 error page if no permission
-            header('Location: /403');
-            exit;
+    /**
+     * Show the login form.
+     */
+    public function showLogin(): void
+    {
+        if ($this->auth->isLoggedIn()) {
+            $this->redirect('/dashboard');
         }
-        $this->view->output('auth/login.html');
-   
+        $this->render('auth/login', [
+            'pageTitle' => 'Login'
+        ]);
+    }
 
     /**
      * Process the login form submission.
      */
-    public function processLogin(): void {
-        // If already logged in, redirect
-        
+    public function processLogin(): void
+    {
         if ($this->auth->isLoggedIn()) {
             $this->redirect('/dashboard');
         }
 
-        // --- CSRF Check ---
-        $submittedToken = $_POST[SecurityHelper::getFormInputName()] ?? null;
-        if (!SecurityHelper::validateToken($submittedToken)) {
-            // CSRF token is invalid or missing
-            $_SESSION['flash_error'] = 'Invalid request. Please try again.';
-            $this->redirect('/login');
-            return; // Stop execution
-        }
-        // --- End CSRF Check ---
+        if (!$this->checkCsrf('/login')) return;
 
-        // Basic validation (implement more robust validation later)
-        $identifier = $_POST['identifier'] ?? null; // Can be username or email
+        $identifier = $_POST['username'] ?? null;
         $password = $_POST['password'] ?? null;
 
         if (empty($identifier) || empty($password)) {
-            // Set flash message for error (implement flash message system)
-            $_SESSION['flash_error'] = 'Username/Email and Password are required.';
+            $this->setFlashMessage('error', 'Username/Email and Password are required.');
             $this->redirect('/login');
             return;
         }
 
         if ($this->auth->login($identifier, $password)) {
-            // Login successful
-             unset($_SESSION['flash_error']); // Clear any previous error
-            $this->redirect('/dashboard'); // Redirect to dashboard or intended page
+            unset($_SESSION['flash_error']);
+            $this->redirect('/dashboard');
         } else {
-            // Login failed         
-            $_SESSION['flash_error'] = 'Invalid credentials or inactive account.';
+            $this->setFlashMessage('error', 'Invalid credentials or inactive account.');
             $this->redirect('/login');
         }
     }
@@ -75,135 +63,150 @@ class UserController extends BaseController {
     /**
      * Log the user out.
      */
-    public function logout(): void {
+    public function logout(): void
+    {
         $this->auth->logout();
-        // Set flash message for success (optional)
-        $_SESSION['flash_success'] = 'You have been logged out.';
+        $this->setFlashMessage('success', 'You have been logged out.');
         $this->redirect('/login');
     }
-
-    // --- User Management Methods (Example - Add permission checks) ---
 
     /**
      * List users (Admin only).
      */
-    public function index(): void {       
-        // Permission Check
-        $this->before();
-        if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
-            $_SESSION['flash_error'] = 'Access Denied.';
-            $this->redirect('/dashboard');
-           return;
-        }
+    public function index(): void
+    {
+        $this->actionName = 'index';
+        $this->requirePermission();
 
-        // Fetch users (implement pagination later)
-        $users = $this->db->select("SELECT id, username, email, first_name, last_name, role, is_active FROM users ORDER BY last_name, first_name"); // TODO: add a model or add the method to the model
+        $users = $this->userModel->findAll();
 
-        $this->view->output('settings/users/list.html', ['users' => $users]); // Adjust template path
+        $this->render('settings/users', [
+            'pageTitle' => 'Manage Users',
+            'activeNav' => 'settings-users',
+            'users' => $users
+        ]);
     }
 
     /**
      * Show form to create a new user (Admin only).
      */
-    public function create(): void {
-         // Permission Check
-        $this->before();
-         if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
-            $_SESSION['flash_error'] = 'Access Denied.';
-            $this->redirect('/dashboard');
-            return;
-        }
-         $this->view->output('settings/users/create.html'); // Adjust template path
+    public function create(): void
+    {
+        $this->actionName = 'create';
+        $this->requirePermission();
+
+        $this->render('settings/users/create', [
+            'pageTitle' => 'Create New User',
+            'activeNav' => 'settings-users',
+            'roles' => $this->userModel->getDefinedRoles(),
+            'formData' => $_SESSION['form_data'] ?? [],
+            'errors' => $_SESSION['errors'] ?? []
+        ]);
+        unset($_SESSION['form_data'], $_SESSION['errors']);
     }
 
     /**
      * Store a new user (Admin only).
      */
-    public function store(): void {
-         $this->before();
-        // Permission Check
-        if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
-            $_SESSION['flash_error'] = 'Access Denied.';
-             $this->redirect('/dashboard');
-             return;
-         }
+    public function store(): void
+    {
+        $this->actionName = 'store';
+        $this->requirePermission();
 
-         // --- CSRF Check ---
-         $submittedToken = $_POST[SecurityHelper::getFormInputName()] ?? null;
-         if (!SecurityHelper::validateToken($submittedToken)) {
-             $_SESSION['flash_error'] = 'Invalid request. Please try again.';
-             $this->redirect('/settings/users/create'); // Redirect back to form
-             return;
-         }
-         // --- End CSRF Check ---
+        if (!$this->checkCsrf('/settings/users/create')) return;
 
-         // TODO: Add Input Validation & CSRF Check
-         $data = [
-             'username' => $_POST['username'] ?? null,
-             'email' => $_POST['email'] ?? null,
-             'first_name' => $_POST['first_name'] ?? null,
-             'last_name' => $_POST['last_name'] ?? null,
-             'role' => $_POST['role'] ?? 'staff',
-             'is_active' => isset($_POST['is_active']) ? 1 : 0,
-             'password_hash' => $this->auth->hashPassword($_POST['password'] ?? '') // Hash the password
-         ];
+        $data = $_POST['user'] ?? [];
+        $password = $data['password'] ?? '';
+        $passwordConfirmation = $data['password_confirmation'] ?? '';
 
-         // Basic check for required fields
-         if (empty($data['username']) || empty($data['email']) || empty($_POST['password'])) {
-              $_SESSION['flash_error'] = 'Username, Email, and Password are required.';
-              // Pass back input data to repopulate form (implement this)
-              $this->redirect('/settings/users/create');
-              return;
-         }
+        $errors = [];
+        if (empty($data['username'])) $errors['username'] = 'Username is required.';
+        if (empty($data['email']) || !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) $errors['email'] = 'Valid Email is required.';
+        if (empty($data['first_name'])) $errors['first_name'] = 'First Name is required.';
+        if (empty($data['last_name'])) $errors['last_name'] = 'Last Name is required.';
+        if (empty($password)) $errors['password'] = 'Password is required.';
+        if ($password !== $passwordConfirmation) $errors['password_confirmation'] = 'Passwords do not match.';
+        if (empty($data['role']) || !in_array($data['role'], $this->userModel->getDefinedRoles())) $errors['role'] = 'Invalid Role selected.';
+        if (!empty($data['username']) && $this->userModel->findByUsername($data['username'])) $errors['username'] = 'Username already exists.';
+        if (!empty($data['email']) && $this->userModel->findByEmail($data['email'])) $errors['email'] = 'Email already exists.';
 
-         if ($this->userModel->create($data)) {
-             $_SESSION['flash_success'] = 'User created successfully.';
-             $this->redirect('/settings/users');
-         } else {
-             $_SESSION['flash_error'] = 'Failed to create user (e.g., duplicate username/email).';
-             $this->redirect('/settings/users/create');
-         }
+        if (!empty($errors)) {
+            $_SESSION['form_data'] = $data;
+            $_SESSION['errors'] = $errors;
+            $this->setFlashMessage('error', 'Please correct the errors below.');
+            $this->redirect('/settings/users/create');
+            return;
+        }
+
+        $userData = [
+            'username' => $data['username'],
+            'email' => $data['email'],
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'role' => $data['role'],
+            'is_active' => isset($data['is_active']) ? (int)$data['is_active'] : 0,
+            'password_hash' => $this->auth->hashPassword($password)
+        ];
+
+        if ($this->userModel->create($userData)) {
+            $this->setFlashMessage('success', 'User created successfully.');
+            $this->redirect('/settings/users');
+        } else {
+            $_SESSION['form_data'] = $data;
+            $this->setFlashMessage('error', 'Failed to create user. Please try again.');
+            $this->redirect('/settings/users/create');
+        }
     }
 
-        /**
+    /**
      * View a specific user (Admin only).
      * @param int $id The ID of the user to view.
      */
-    public function view(int $id): void {
-         $this->before();        
-         if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
-             $_SESSION['flash_error'] = 'Access Denied.';
-             $this->redirect('/dashboard');
-             return;
-         }
+    public function view(int $id): void
+    {
+        $this->actionName = 'view';
+        $this->requirePermission();
 
-        $user = $this->userModel->find($id);
+        $user = $this->userModel->findById($id);
 
         if ($user) {
-            $this->view->output('settings/users/view.html', ['user' => $user]);
+            $this->render('settings/users/view', [
+                'pageTitle' => 'View User: ' . htmlspecialchars($user['username']),
+                'activeNav' => 'settings-users',
+                'user' => $user
+            ]);
         } else {
-            $_SESSION['flash_error'] = 'User not found.';
+            $this->setFlashMessage('error', 'User not found.');
             $this->redirect('/settings/users');
         }
     }
 
     /**
-     * Edit a specific user (Admin only).
+     * Show form to edit a specific user (Admin only).
      * @param int $id The ID of the user to edit.
      */
-    public function edit(int $id): void {
-         $this->before();        
-         if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
-             $_SESSION['flash_error'] = 'Access Denied.';
-             $this->redirect('/dashboard');
-             return;
-         }
-         $user = $this->userModel->find($id);
-         
+    public function edit(int $id): void
+    {
+        $this->actionName = 'edit';
+        $this->requirePermission();
+
+        $user = $this->userModel->findById($id);
+
         if ($user) {
-            $this->view->output('settings/users/edit.html', ['user' => $user]);
+            $formData = $_SESSION['form_data'] ?? $user;
+            unset($_SESSION['form_data']);
+            $errors = $_SESSION['errors'] ?? [];
+            unset($_SESSION['errors']);
+
+            $this->render('settings/users/edit', [
+                'pageTitle' => 'Edit User: ' . htmlspecialchars($user['username']),
+                'activeNav' => 'settings-users',
+                'user' => $formData,
+                'roles' => $this->userModel->getDefinedRoles(),
+                'errors' => $errors
+            ]);
         } else {
-            $_SESSION['flash_error'] = 'User not found.';
+            $this->setFlashMessage('error', 'User not found.');
             $this->redirect('/settings/users');
         }
     }
@@ -211,65 +214,125 @@ class UserController extends BaseController {
     /**
      * Update a user (Admin only).
      * @param int $id The ID of the user to update.
-     * @param array $data The updated user data.
      */
-    public function update(int $id, array $data): void {
-         $this->before();        
-         if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
-             $_SESSION['flash_error'] = 'Access Denied.';
-             $this->redirect('/dashboard');
-             return;
-         }
+    public function update(int $id): void
+    {
+        $this->actionName = 'update';
+        $this->requirePermission();
 
-         // --- CSRF Check ---
-         $submittedToken = $_POST[SecurityHelper::getFormInputName()] ?? null;
-         if (!SecurityHelper::validateToken($submittedToken)) {
-             $_SESSION['flash_error'] = 'Invalid request. Please try again.';
-             $this->redirect("/settings/users/$id/edit"); // Redirect back to form
-             return;
-         }
-         // --- End CSRF Check ---
+        if (!$this->checkCsrf("/settings/users/edit/$id")) return;
 
-        // Implement input validation and CSRF checks here
-        $user = $this->userModel->find($id);
-        if (empty($user)) {
-            $_SESSION['flash_error'] = 'User not found';
+        $user = $this->userModel->findById($id);
+        if (!$user) {
+            $this->setFlashMessage('error', 'User not found');
             $this->redirect('/settings/users');
-
             return;
         }
-        // Implement input validation and CSRF checks here
-        if ($this->userModel->update($id, $data)) {
-            $_SESSION['flash_success'] = 'User updated successfully.';
-        } else {
-            $_SESSION['flash_error'] = 'Failed to update user.';
+
+        $data = $_POST['user'] ?? [];
+        $password = $data['password'] ?? '';
+        $passwordConfirmation = $data['password_confirmation'] ?? '';
+
+        $errors = [];
+        if (empty($data['username'])) $errors['username'] = 'Username is required.';
+        if (empty($data['email']) || !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) $errors['email'] = 'Valid Email is required.';
+        if (empty($data['first_name'])) $errors['first_name'] = 'First Name is required.';
+        if (empty($data['last_name'])) $errors['last_name'] = 'Last Name is required.';
+        if (!empty($password) && $password !== $passwordConfirmation) $errors['password_confirmation'] = 'Passwords do not match.';
+        if (empty($data['role']) || !in_array($data['role'], $this->userModel->getDefinedRoles())) $errors['role'] = 'Invalid Role selected.';
+        if (!empty($data['username']) && $this->userModel->usernameExists($data['username'], $id)) $errors['username'] = 'Username already exists.';
+        if (!empty($data['email']) && $this->userModel->emailExists($data['email'], $id)) $errors['email'] = 'Email already exists.';
+
+        if (!empty($errors)) {
+            $_SESSION['form_data'] = $data;
+            $_SESSION['errors'] = $errors;
+            $this->setFlashMessage('error', 'Please correct the errors below.');
+            $this->redirect("/settings/users/edit/$id");
+            return;
         }
-        $this->redirect('/settings/users'); // Redirect to user list
+
+        $updateData = [
+            'username' => $data['username'],
+            'email' => $data['email'],
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'role' => $data['role'],
+            'is_active' => isset($data['is_active']) ? (int)$data['is_active'] : 0,
+        ];
+
+        if (!empty($password)) {
+            $updateData['password_hash'] = $this->auth->hashPassword($password);
+        }
+
+        if ($this->userModel->update($id, $updateData) >= 0) {
+            $this->setFlashMessage('success', 'User updated successfully.');
+            $this->redirect('/settings/users');
+        } else {
+            $_SESSION['form_data'] = $data;
+            $this->setFlashMessage('error', 'Failed to update user. Please try again.');
+            $this->redirect("/settings/users/edit/$id");
+        }
     }
 
     /**
      * Delete a user (Admin only).
      * @param int $id The ID of the user to delete.
      */
-    public function delete(int $id): void {
-         $this->before();
-         if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
-             $_SESSION['flash_error'] = 'Access Denied.';
-             $this->redirect('/dashboard');
-             return;
-         }
-         $this->userModel->delete($id);
-        $_SESSION['flash_success'] = 'User deleted successfully';
-         $this->redirect('/settings/users'); // Redirect to user list
-        
+    public function delete(int $id): void
+    {
+        $this->actionName = 'delete';
+        $this->requirePermission();
+
+        $user = $this->userModel->findById($id);
+        if (!$user) {
+            $this->setFlashMessage('error', 'User not found.');
+            $this->redirect('/settings/users');
+            return;
+        }
+
+        if ($this->currentUser && $this->currentUser['id'] === $id) {
+            $this->setFlashMessage('error', 'You cannot delete your own account.');
+            $this->redirect('/settings/users');
+            return;
+        }
+
+        if ($this->userModel->delete($id)) {
+            $this->setFlashMessage('success', 'User deleted successfully.');
+        } else {
+            $this->setFlashMessage('error', 'Failed to delete user.');
+        }
+        $this->redirect('/settings/users');
     }
 
-    // Add edit, update, delete methods similarly with permission checks
-    }
     // --- Password Reset Methods ---
-    public function forgotPassword(): void { /* Show form */ }
-    public function processForgotPassword(): void { /* Handle submission, generate token, send email */ }
-    public function resetPassword(string $token): void { /* Show reset form if token is valid */ }
-    public function processResetPassword(string $token): void { /* Handle reset submission */ }
+    public function forgotPassword(): void
+    {
+        $this->render('auth/forgot_password', ['pageTitle' => 'Forgot Password']);
+    }
 
-    // TODO: Add CSRF checks to all other POST/UPDATE/DELETE methods (update, delete, processForgotPassword, processResetPassword etc.)
+    public function processForgotPassword(): void
+    {
+        // Add CSRF check
+        // Validate email exists
+        // Generate reset token, store it with expiry
+        // Send email with reset link
+        // Redirect with success/error message
+    }
+
+    public function resetPassword(string $token): void
+    {
+        // Validate token exists and hasn't expired
+        // Render reset form, passing the token
+        $this->render('auth/reset_password', ['pageTitle' => 'Reset Password', 'token' => $token]);
+    }
+
+    public function processResetPassword(string $token): void
+    {
+        // Add CSRF check
+        // Validate token exists and hasn't expired
+        // Validate new password and confirmation
+        // Update user's password hash
+        // Invalidate the reset token
+        // Redirect to login with success message
+    }
+}

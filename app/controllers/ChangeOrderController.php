@@ -1,225 +1,218 @@
 <?php
 
-namespace AppControllers;
+namespace App\Controllers; // Correct namespace
 
-use AppLibrariesAuth;
-use AppDatabase;
+use App\Database;
 use App\Models\ChangeOrder;
 use App\Models\ChangeOrderItem;
+use App\Models\Project; // To verify project exists
+use App\Helpers\SecurityHelper;
 use Exception;
+// Auth is likely handled by BaseController
 
 class ChangeOrderController extends BaseController
 {
-    protected $controller = 'ChangeOrder';
-    protected $action;    
+    protected string $controllerName = 'ChangeOrder'; // For permissions
 
-    public function __construct(Database $db)
+    private ChangeOrder $changeOrderModel;
+    private ChangeOrderItem $changeOrderItemModel;
+    private Project $projectModel;
+
+
+    public function __construct(Database $db, array $config = [])
     {
-        parent::__construct($db);
-    }
-
-    public function before(string $action): void
-    {
-        $this->action = $action;
-        if (!Auth::isLoggedIn()) {
-            // Redirect to the login page if not logged in
-            header('Location: /login');
-            exit;
-        }
-
-        // Get the current user from the session
-        $user = $_SESSION['user'];
-
-        // Check if the user has permission to access the current controller and action
-        if (!Auth::checkPermission($user, $this->controller, $this->action)) {
-            // Redirect to a 403 error page if no permission
-            header('Location: /403');
-            exit;
-        }
-    }
-    /**
-     * Index action: Get all change orders for a given project ID.
-     * @param int $project_id The project ID.
-     * @return string JSON encoded data with project_id and change orders.
-     */
-    public function index(int $project_id): string
-    {
-        $this->before('index');
-
-        try{
-
-            // 1. Get the project id from the parameters.
-            $projectId = $project_id;
-
-            // 2. Use a database query to get all the change orders that have the received project_id.
-            $query = "SELECT * FROM change_orders WHERE project_id = :project_id";
-            $params = [':project_id' => $projectId];
-            $results = $this->db->query($query, $params);
-
-            // 3. Create an array with all the change orders.
-            $changeOrders = [];
-            foreach ($results as $result) {
-                $changeOrder = new ChangeOrder($result);
-                $changeOrders[] = $changeOrder->toArray();
-            }
-
-            // 4. Return a string with the project_id, and all the change orders in a json format.
-            return json_encode([
-                'project_id' => $projectId,
-                'change_orders' => $changeOrders
-            ]);
-        }catch (Exception $e){
-            error_log('Error in ChangeOrderController::index: ' . $e->getMessage());
-            return json_encode(['error' => 'An error occurred while processing your request.']);
-        }
-    }
-
-
-    /**
-     * View action: Get a specific change order and its items.
-     * @param int $id The change order ID.
-     * @return string JSON encoded data with the change order and its items.
-     */
-    public function view(int $id): string
-    {
-        $this->before('view');
-
-        // 1. Get the change order ID from the parameters.
-        $changeOrderId = $id;
-
-        // 2. Use a database query to get the change order that has the received ID.
-        $query = "SELECT * FROM change_orders WHERE id = :id";
-        $params = [':id' => $changeOrderId];
-        $result = $this->db->query($query, $params);
-        $changeOrder = new ChangeOrder($result[0]);
-
-        // 3. Use a database query to get all the items that have the change order id.
-        $query = "SELECT * FROM change_order_items WHERE change_order_id = :change_order_id";
-        $params = [':change_order_id' => $changeOrderId];
-        $results = $this->db->query($query, $params);
-
-        // 4. Create an array with all the change order items.
-        $changeOrderItems = [];
-        foreach ($results as $result) {
-            $changeOrderItem = new ChangeOrderItem($result);
-            $changeOrderItems[] = $changeOrderItem->toArray();
-        }
-
-        // 5. Return a string with the change order and all the change order items in json format.
-        return json_encode(['change_order' => $changeOrder->toArray(), 'change_order_items' => $changeOrderItems]);
-    }
-
-
-
-     /**
-     * Create action: Create a new change order.
-     * @param array $data The change order data.
-     * @return string JSON encoded data with the id of the new change order.
-     */
-    public function create(array $data): string
-    {
-        $this->before('create');        
-       
-       try {
-            // 1. Receive the data in an array as a parameter.
-            $changeOrderData = $data;
-
-            // 2. Create a new `ChangeOrder` object with the data received.
-            $changeOrder = new ChangeOrder($changeOrderData);
-
-            // 3. Add the change order to the database.
-            $query = "INSERT INTO change_orders (project_id, change_order_number, description, change_order_date, status) VALUES (:project_id, :change_order_number, :description, :change_order_date, :status)";
-            $params = $changeOrder->toArray();
-            $this->db->query($query, $params);
-
-            // 4. Return a string with the id of the new change order.
-            return json_encode(['id' => $this->db->lastInsertId()]);
-        } catch (Exception $e) {
-            // Log the error
-            error_log('Error in ChangeOrderController::create: ' . $e->getMessage());
-            // Return a JSON error response
-            return json_encode(['error' => 'An error occurred while processing your request.']);
-        }
-    }
-
-   
-    /**
-     * Edit action: Update an existing change order.
-     * @param int $id The change order ID.
-     * @param array $data The data to update.
-     * @return string JSON encoded data with the id of the updated change order.
-     */
-    public function edit(int $id, array $data): string
-    {
-        $this->before('edit');
-
-        try {
-            // 1. Receive the change order id as the first parameter.
-            $changeOrderId = $id;
-
-            // 2. Receive the data to update in an array as the second parameter.
-            $changeOrderData = $data;
-
-            // 3. Get the change order from the database with the received id.
-            $query = "SELECT * FROM change_orders WHERE id = :id";
-            $params = [':id' => $changeOrderId];
-            $result = $this->db->query($query, $params);
-            $changeOrder = new ChangeOrder($result[0]);
-
-            // 4. Update the change order data with the data received in the array.
-            $changeOrder->fromArray($changeOrderData);
-
-            // 5. Update the database.
-            $query = "UPDATE change_orders SET project_id = :project_id, change_order_number = :change_order_number, description = :description, change_order_date = :change_order_date, status = :status WHERE id = :id";
-            $params = $changeOrder->toArray();
-            $this->db->query($query, $params);
-        } catch (Exception $e) {
-            // Log the error
-            error_log('Error in ChangeOrderController::edit: ' . $e->getMessage());
-        }
-
-        // 6. Return a string with the id of the updated change order.
-        return json_encode(['id' => $changeOrderId]);
+        parent::__construct($db, $config);
+        // Auth check handled by BaseController or requirePermission()
+        $this->changeOrderModel = new ChangeOrder($this->db);
+        $this->changeOrderItemModel = new ChangeOrderItem($this->db);
+        $this->projectModel = new Project($this->db);
     }
 
     /**
-     * Delete action: Delete a change order.
-     * @param int $id The change order ID.
-     * @return string JSON encoded data with the id of the deleted change order.
+     * List change orders for a project.
+     * Could be a dedicated page or part of the project view.
      */
-    public function delete(int $id): string
+    public function index(int $projectId): void
     {
-        $this->before('delete');
+        $this->actionName = 'index';
+        $this->requirePermission();
 
-        try {
-            // 1. Receive the change order id as a parameter.
-            $changeOrderId = $id;
-
-            // 2. Get the change order from the database with the received id.
-            $query = "SELECT * FROM change_orders WHERE id = :id";
-            $params = [':id' => $changeOrderId];
-            $result = $this->db->query($query, $params);
-
-            if (empty($result)) {
-                // Return a JSON error response if change order not found
-                return json_encode(['error' => 'Change order not found.']);
-            }
-
-            $changeOrder = new ChangeOrder($result[0]);
-
-            // 3. Delete the change order from the database.
-            $query = "DELETE FROM change_orders WHERE id = :id";
-            $params = [':id' => $changeOrderId];
-            $this->db->query($query, $params);
-
-            // 4. Return a string with the id of the deleted change order.
-            return json_encode(['id' => $changeOrderId]);
-        } catch (Exception $e) {
-            // Log the error
-            error_log('Error in ChangeOrderController::delete: ' . $e->getMessage());
-            // Return a JSON error response
-            return json_encode(['error' => 'An error occurred while processing your request.']);
+        $project = $this->projectModel->findById($projectId);
+        if (!$project) {
+            $this->setFlashMessage('error', 'Project not found.');
+            $this->redirect('/projects'); // Redirect to projects list
+            return;
         }
 
+        $changeOrders = $this->changeOrderModel->findByProjectId($projectId);
+
+        $this->render('change_orders/list', [ // Adjust template path, use .php
+            'pageTitle' => 'Change Orders for ' . htmlspecialchars($project['project_name']),
+            'activeNav' => 'projects', // Keep project context
+            'project' => $project,
+            'changeOrders' => $changeOrders
+        ]);
+    }
+
+    /**
+     * Show form to create a new change order.
+     */
+    public function create(int $projectId): void
+    {
+        $this->actionName = 'create';
+        $this->requirePermission();
+
+        $project = $this->projectModel->findById($projectId);
+        if (!$project) {
+            $this->setFlashMessage('error', 'Project not found.');
+            $this->redirect('/projects');
+            return;
+        }
+
+        $nextCONumber = $this->changeOrderModel->getNextCONumber($projectId);
+
+        $this->render('change_orders/create', [ // Adjust template path, use .php
+            'pageTitle' => 'Create Change Order for ' . htmlspecialchars($project['project_name']),
+            'activeNav' => 'projects',
+            'project' => $project,
+            'changeOrder' => $_SESSION['form_data'] ?? ['change_order_number' => $nextCONumber, 'status' => 'draft'], // Repopulate form
+            'errors' => $_SESSION['errors'] ?? [],
+            'formAction' => '/projects/' . $projectId . '/change-orders/store'
+        ]);
+        unset($_SESSION['form_data'], $_SESSION['errors']);
+    }
+
+
+    /**
+     * Store a new change order header. Items are added/edited separately.
+     */
+    public function store(int $projectId): void
+    {
+        $this->actionName = 'store'; // Map to 'create' permission
+        $this->requirePermission();
+
+        if (!$this->checkCsrf('/projects/' . $projectId . '/change-orders/create')) return;
+
+        $project = $this->projectModel->findById($projectId);
+        if (!$project) {
+            $this->setFlashMessage('error', 'Project not found.');
+            $this->redirect('/projects');
+            return;
+        }
+
+        $data = $_POST;
+        $data['project_id'] = $projectId;
+
+        $changeOrder = new ChangeOrder($data);
+
+        if ($changeOrder->validate()) {
+            $changeOrder->save();
+            $this->setFlashMessage('success', 'Change order created successfully.');
+            $this->redirect('/projects/' . $projectId . '/change-orders');
+        } else {
+            $_SESSION['form_data'] = $data;
+            $_SESSION['errors'] = $changeOrder->getErrors();
+            $this->redirect('/projects/' . $projectId . '/change-orders/create');
+        }
+    }
+
+    /**
+     * Edit a change order.
+     */
+    public function edit(int $projectId, int $changeOrderId): void
+    {
+        $this->actionName = 'edit';
+        $this->requirePermission();
+
+        $project = $this->projectModel->findById($projectId);
+        if (!$project) {
+            $this->setFlashMessage('error', 'Project not found.');
+            $this->redirect('/projects');
+            return;
+        }
+
+        $changeOrder = $this->changeOrderModel->findById($changeOrderId);
+        if (!$changeOrder) {
+            $this->setFlashMessage('error', 'Change order not found.');
+            $this->redirect('/projects/' . $projectId . '/change-orders');
+            return;
+        }
+
+        $this->render('change_orders/edit', [ // Adjust template path, use .php
+            'pageTitle' => 'Edit Change Order for ' . htmlspecialchars($project['project_name']),
+            'activeNav' => 'projects',
+            'project' => $project,
+            'changeOrder' => $_SESSION['form_data'] ?? $changeOrder->toArray(), // Repopulate form
+            'errors' => $_SESSION['errors'] ?? [],
+            'formAction' => '/projects/' . $projectId . '/change-orders/update/' . $changeOrderId
+        ]);
+        unset($_SESSION['form_data'], $_SESSION['errors']);
+    }
+
+    /**
+     * Update a change order.
+     */
+    public function update(int $projectId, int $changeOrderId): void
+    {
+        $this->actionName = 'update'; // Map to 'edit' permission
+        $this->requirePermission();
+
+        if (!$this->checkCsrf('/projects/' . $projectId . '/change-orders/edit/' . $changeOrderId)) return;
+
+        $project = $this->projectModel->findById($projectId);
+        if (!$project) {
+            $this->setFlashMessage('error', 'Project not found.');
+            $this->redirect('/projects');
+            return;
+        }
+
+        $changeOrder = $this->changeOrderModel->findById($changeOrderId);
+        if (!$changeOrder) {
+            $this->setFlashMessage('error', 'Change order not found.');
+            $this->redirect('/projects/' . $projectId . '/change-orders');
+            return;
+        }
+
+        $data = $_POST;
+        $data['project_id'] = $projectId;
+
+        $changeOrder->fromArray($data);
+
+        if ($changeOrder->validate()) {
+            $changeOrder->save();
+            $this->setFlashMessage('success', 'Change order updated successfully.');
+            $this->redirect('/projects/' . $projectId . '/change-orders');
+        } else {
+            $_SESSION['form_data'] = $data;
+            $_SESSION['errors'] = $changeOrder->getErrors();
+            $this->redirect('/projects/' . $projectId . '/change-orders/edit/' . $changeOrderId);
+        }
+    }
+
+    /**
+     * Delete a change order.
+     */
+    public function delete(int $projectId, int $changeOrderId): void
+    {
+        $this->actionName = 'delete';
+        $this->requirePermission();
+
+        $project = $this->projectModel->findById($projectId);
+        if (!$project) {
+            $this->setFlashMessage('error', 'Project not found.');
+            $this->redirect('/projects');
+            return;
+        }
+
+        $changeOrder = $this->changeOrderModel->findById($changeOrderId);
+        if (!$changeOrder) {
+            $this->setFlashMessage('error', 'Change order not found.');
+            $this->redirect('/projects/' . $projectId . '/change-orders');
+            return;
+        }
+
+        $changeOrder->delete();
+        $this->setFlashMessage('success', 'Change order deleted successfully.');
+        $this->redirect('/projects/' . $projectId . '/change-orders');
     }
 }
