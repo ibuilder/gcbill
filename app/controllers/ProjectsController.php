@@ -1,27 +1,27 @@
 <?php
 
-namespace App\Controllers;
+namespace AppControllers;
 
-use App\Libraries\Auth;
+use AppLibrariesAuth;
 use Exception;
-use App\Database;
-use App\Models\Project;
-use App\Models\Owner;
+use AppDatabase;
+use AppModelsProject;
+use AppModelsOwner;
 
-class ProjectsController
+class ProjectsController extends BaseController
 {
     protected $controller = 'Projects';
     protected $action;
-    protected $db;
 
     public function __construct(Database $db)
     {
-        $this->db = $db;
+        parent::__construct($db);
     }
 
-    protected function before($action)
+    public function before($action)
     {
         $this->action = $action;
+        
         // Check if the user is logged in
         if (!Auth::isLoggedIn()) {
             // Redirect to the login page if not logged in
@@ -47,7 +47,8 @@ class ProjectsController
     {
         $this->before('index');        
         try{
-            $projects = Project::all();
+            $project = new Project($this->db);
+            $projects = $project->all();
             include(__DIR__ . '/../../templates/projects/index.html');
         }catch(Exception $e){
             error_log('Error in ProjectsController::index: ' . $e->getMessage());
@@ -63,12 +64,13 @@ class ProjectsController
     public function view(int $id): void {
         $this->before('view');
         try{
-            $project = Project::find($id);
+            $project = new Project($this->db);
+            $project = $project->find($id);
             if(!$project){
                 include(__DIR__ . '/../../templates/404.html');
                 return;
             }
-            $owners = Owner::all();
+            $owners = (new Owner($this->db))->all();
             include(__DIR__ . '/../../templates/projects/view.html');
         }catch(Exception $e){
             error_log('Error in ProjectsController::view: ' . $e->getMessage());
@@ -87,7 +89,7 @@ class ProjectsController
     {
         $this->before('create');        
         try{
-            $project = new Project();
+            $project = new Project($this->db);
             foreach ($data as $key => $value) {
                 $project->$key = $value;
             }
@@ -114,7 +116,8 @@ class ProjectsController
     {
         $this->before('edit');
         try{
-            $project = Project::find($id);
+            $project = new Project($this->db);
+            $project = $project->find($id);
             if(!$project){
                 include(__DIR__ . '/../../templates/404.html');
                 return "";
@@ -141,7 +144,8 @@ class ProjectsController
     {
         $this->before('delete');
         try{
-            $project = Project::find($id);
+            $project = new Project($this->db);
+            $project = $project->find($id);
             if(!$project){
                 include(__DIR__ . '/../../templates/404.html');
                 return "";
@@ -158,18 +162,4 @@ class ProjectsController
             return "";
         }
     }
-    
-    /**
-     * Magic method to handle invalid actions.
-     * @param string $method The method name.
-     * @param array $args The arguments.
-     * @return void
-     */
-    public function __call(string $method, array $args): void
-    {
-        if (method_exists($this, $method)) {
-            call_user_func_array([$this, $method], $args);
-        } else {
-            header('HTTP/1.1 404 Not Found');
-        }
-    }
+}

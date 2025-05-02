@@ -1,20 +1,24 @@
 <?php
 
-namespace App\Controllers;
+namespace AppControllers;
 
-use App\Libraries\Auth;
-use App\Models\ChangeOrder as AppModelsChangeOrder;
-use App\Database;
+use AppLibrariesAuth;
+use AppModelsChangeOrder as AppModelsChangeOrder;
+use AppDatabase;
 
-class ChangeOrdersController
+class ChangeOrdersController extends BaseController
 {
-    protected $controller = 'ChangeOrders';
+     protected $controller = 'ChangeOrders';
     protected $action;
-    protected $db;
+   
 
+    /**
+     * Constructor for the ChangeOrdersController class.
+     * @param Database $db The database instance.
+     */
     public function __construct(Database $db)
     {
-        $this->db = $db;
+         parent::__construct($db);
     }
 
     /**
@@ -27,7 +31,7 @@ class ChangeOrdersController
     {
         $this->action = $action;
         // Check if the user is logged in
-        if (!Auth::isLoggedIn()) {
+        if (!Auth::isLoggedIn()) {\
             // Redirect to the login page if not logged in
             header('Location: /login');
             exit;
@@ -42,6 +46,7 @@ class ChangeOrdersController
             header('Location: /403');
             exit;
         }
+        
     }
     /**
      * Magic method to handle invalid actions.
@@ -71,7 +76,7 @@ class ChangeOrdersController
     {
         $this->before('index');
         try {
-            $changeOrder = new AppModelsChangeOrder($this->db);
+            $changeOrder = new AppModelsChangeOrder($this->db);\
             $changeOrders = $changeOrder->all($projectId);
             return json_encode($changeOrders);
 
@@ -91,21 +96,17 @@ class ChangeOrdersController
     {
         $this->before('view');
         try {
-            $changeOrder = new AppModelsChangeOrder($this->db);
+            $changeOrder = new AppModelsChangeOrder($this->db);\
             $result = $changeOrder->find($id);
             if (!$result) {
                 return json_encode(['error' => 'Change order not found.']);
-            } catch (\Exception $e) {
-                error_log('Error in ChangeOrdersController::view: ' . $e->getMessage());
-                 return json_encode(['error' => 'An error occurred while processing your request.']);
             }
-
             return json_encode($result);
            
         } catch (\Exception $e) {
              error_log('Error in ChangeOrdersController::view: ' . $e->getMessage());
             return json_encode(['error' => 'An error occurred while processing your request.']);
-        }
+        }   
         
     }
 
@@ -118,14 +119,14 @@ class ChangeOrdersController
     {
         $this->before('create');
         try{
-            $changeOrder = new AppModelsChangeOrder($this->db);
+            $changeOrder = new AppModelsChangeOrder($this->db);\
             $result = $changeOrder->insert($data);
             if (!$result) {
                 return json_encode(['error' => 'Error creating change order.']);
             }
             return json_encode(['id' => $result]);
         }catch(\Exception $e){
-            error_log('Error in ChangeOrdersController::create: ' . $e->getMessage());
+            error_log('Error in ChangeOrdersController::create: ' . $e->getMessage());\
             return json_encode(['error' => 'An error occurred while processing your request.']);
         }
     }

@@ -1,26 +1,22 @@
 <?php
 
-namespace App\Controllers;
+namespace AppControllers;
 
-use App\Controller; // Extends base Controller
-use App\Models\User;
-use App\Helpers\SecurityHelper; // Import SecurityHelper
-use App\Libraries\Auth;
+use AppLibrariesAuth;
+use AppHelpersSecurityHelper;
+use AppModelsUser;
+use AppDatabase;
 
-/** */
-class UserController extends Controller {
+class UserController extends BaseController {
 
-    private User $userModel;
+    private $userModel;
     private const USERS_CONTROLLER = 'UserController';
 
-    public function before()
+    public function __construct(Database $db)
     {
-        // Check if the user is logged in
-        if (!Auth::isLoggedIn()) {
-            // Redirect to the login page if not logged in
-            header('Location: /login');
-            exit;
-        }
+        parent::__construct($db);
+        $this->userModel = new User($this->db);
+    }
 
         // Get the current user from the session
         $user = $_SESSION['user'];
@@ -30,21 +26,6 @@ class UserController extends Controller {
             // Redirect to a 403 error page if no permission
             header('Location: /403');
             exit;
-        }
-    }
-
-    public function __construct() {
-        parent::__construct(); // Calls parent constructor (DB, View, Auth)
-        $this->userModel = new User($this->db); // Instantiate User model
-    }
-
-    /**
-     * Show the login form.
-     */
-    public function login(): void {
-        // If already logged in, redirect to dashboard
-        if ($this->auth->isLoggedIn()) {
-            $this->redirect('/dashboard');
         }
         $this->view->output('auth/login.html');
     }

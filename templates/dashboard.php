@@ -1,9 +1,8 @@
-<!-- filepath: c:\Users\iphoe\OneDrive\Documents\Server\construction-billing\production\construction-billing-app\templates\dashboard.html -->
 <?php
 // Use the View instance passed to the template to include partials
 // Pass necessary data like pageTitle and config to the header
 global $config; // Make config available
-echo $view->includePartial('partials/header.html', [
+echo $view->includePartial('partials/header.php', [
     'pageTitle' => $pageTitle ?? 'Dashboard',
     'config' => $config,
     'currentUser' => $currentUser ?? null, // Pass user data
@@ -118,7 +117,7 @@ echo $view->includePartial('partials/header.html', [
 
 <?php
 // Include the footer partial
-echo $view->includePartial('partials/footer.html', [
+echo $view->includePartial('partials/footer.php', [
      'config' => $config // Pass config if needed in footer
 ]);
 ?>

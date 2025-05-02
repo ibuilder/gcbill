@@ -1,31 +1,26 @@
 <?php
 
-namespace App\Controllers;
+namespace AppControllers;
 
+use AppLibrariesAuth;
+use AppDatabase;
 use App\Models\ChangeOrder;
 use App\Models\ChangeOrderItem;
 use Exception;
-use App\Libraries\Auth; // Correct the class name
-use App\Database;
 
-class ChangeOrderController
+class ChangeOrderController extends BaseController
 {
     protected $controller = 'ChangeOrder';
     protected $action;    
-    protected $db;
-
-    private Auth $auth;
 
     public function __construct(Database $db)
-    {      
-        $this->auth = new Auth();
-        $this->db = $db;
+    {
+        parent::__construct($db);
     }
 
-    protected function before($action)
+    public function before(string $action): void
     {
         $this->action = $action;
-        // Check if the user is logged in
         if (!Auth::isLoggedIn()) {
             // Redirect to the login page if not logged in
             header('Location: /login');
@@ -50,6 +45,7 @@ class ChangeOrderController
     public function index(int $project_id): string
     {
         $this->before('index');
+
         try{
             
             // 1. Get the project id from the parameters.
@@ -87,6 +83,7 @@ class ChangeOrderController
     public function view(int $id): string
     {
         $this->before('view');
+
         // 1. Get the change order ID from the parameters.
         $changeOrderId = $id;
 
@@ -122,7 +119,8 @@ class ChangeOrderController
     public function create(array $data): string
     {
         $this->before('create');        
-        try {
+
+       try {
             // 1. Receive the data in an array as a parameter.
             $changeOrderData = $data;
 
@@ -154,6 +152,7 @@ class ChangeOrderController
     public function edit(int $id, array $data): string
     {
         $this->before('edit');
+
         try {
             // 1. Receive the change order id as the first parameter.
             $changeOrderId = $id;
@@ -191,6 +190,7 @@ class ChangeOrderController
     public function delete(int $id): string
     {
         $this->before('delete');
+        
         try {
             // 1. Receive the change order id as a parameter.
             $changeOrderId = $id;
@@ -221,21 +221,5 @@ class ChangeOrderController
             return json_encode(['error' => 'An error occurred while processing your request.']);
         }
 
-    }
-    /**
-     * Magic method to handle invalid actions.
-     * @param string $method The method name.
-     * @param array $args The arguments.
-     * @return void
-     */
-    public function __call(string $method, array $args): void
-    {
-        // Check if the requested action is valid
-        if (method_exists($this, $method)) {
-
-            return call_user_func_array([$this, $method], $args);
-        } else {
-            header('HTTP/1.1 404 Not Found');
-        }
     }
 }

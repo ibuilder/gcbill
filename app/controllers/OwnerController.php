@@ -1,29 +1,27 @@
 <?php
-// filepath: c:\Users\iphoe\OneDrive\Documents\Server\construction-billing\production\construction-billing-app\app\Controllers\OwnerController.php
-<?php
 
-namespace App\Controllers;
+namespace AppControllers;
 
-use App\Controller;
-use App\Models\Owner;
-use App\Helpers\SecurityHelper;
+use AppLibrariesSecurityHelper;
+use AppModelsOwner;
+use AppDatabase;
 
-class OwnerController extends Controller {
+class OwnerController extends BaseController
+{
 
-    private Owner $ownerModel;
+    private $ownerModel;
 
-    public function __construct() {
-        parent::__construct();
-        if (!$this->auth->isLoggedIn()) {
-            $this->redirect('/login');
-        }
+    public function __construct(Database $db)
+    {
+        parent::__construct($db);
         $this->ownerModel = new Owner($this->db);
     }
 
     /**
      * Display a list of owners.
      */
-    public function index(): void {
+    public function index(): void
+    {
         $owners = $this->ownerModel->findAll();
         $this->view->output('owners/list.html', [
             'pageTitle' => 'Owners',
@@ -34,8 +32,9 @@ class OwnerController extends Controller {
 
     /**
      * Show the form for creating a new owner.
-     */
-    public function create(): void {
+     */    
+    public function create(): void
+    {
         $this->view->output('owners/create.html', [
             'pageTitle' => 'Create New Owner',
             'activeNav' => 'owners',
@@ -47,12 +46,13 @@ class OwnerController extends Controller {
     /**
      * Store a newly created owner.
      */
-    public function store(): void {
+    public function store(): void
+    {
         // CSRF Check
         if (!SecurityHelper::validateToken($_POST[SecurityHelper::getFormInputName()] ?? null)) {
             $_SESSION['flash_error'] = 'Invalid request. Please try again.';
-            $this->redirect('/owners/create');
-            return;
+             header('Location: /owners/create');
+            exit;
         }
 
         // Basic Validation
@@ -60,20 +60,20 @@ class OwnerController extends Controller {
         if (empty($data['owner_name'])) {
             $_SESSION['flash_error'] = 'Owner Name is required.';
             $_SESSION['form_data'] = $data;
-            $this->redirect('/owners/create');
-            return;
+            header('Location: /owners/create');
+            exit;
         }
         if ($this->ownerModel->ownerNameExists($data['owner_name'])) {
              $_SESSION['flash_error'] = 'Owner Name already exists.';
              $_SESSION['form_data'] = $data;
-             $this->redirect('/owners/create');
-             return;
+             header('Location: /owners/create');
+             exit;
         }
 
         if ($this->ownerModel->create($data)) {
             $_SESSION['flash_success'] = 'Owner created successfully.';
             unset($_SESSION['form_data']);
-            $this->redirect('/owners');
+            header('Location: /owners');
         } else {
             $_SESSION['flash_error'] = 'Failed to create owner.';
             $_SESSION['form_data'] = $data;
@@ -84,11 +84,12 @@ class OwnerController extends Controller {
     /**
      * Display the specified owner (optional view).
      */
-    public function view(int $id): void {
+    public function view(int $id): void
+    {
         $owner = $this->ownerModel->findById($id);
         if (!$owner) {
             $_SESSION['flash_error'] = 'Owner not found.';
-            $this->redirect('/owners');
+            header('Location: /owners');
             return;
         }
 
@@ -102,11 +103,12 @@ class OwnerController extends Controller {
     /**
      * Show the form for editing the specified owner.
      */
-    public function edit(int $id): void {
+    public function edit(int $id): void
+    {
         $owner = $this->ownerModel->findById($id);
         if (!$owner) {
             $_SESSION['flash_error'] = 'Owner not found.';
-            $this->redirect('/owners');
+            header('Location: /owners');
             return;
         }
 
@@ -124,12 +126,13 @@ class OwnerController extends Controller {
     /**
      * Update the specified owner.
      */
-    public function update(int $id): void {
+    public function update(int $id): void
+    {
         // CSRF Check
         if (!SecurityHelper::validateToken($_POST[SecurityHelper::getFormInputName()] ?? null)) {
             $_SESSION['flash_error'] = 'Invalid request. Please try again.';
-            $this->redirect('/owners/edit/' . $id);
-            return;
+             header('Location: /owners/edit/' . $id);
+            exit;
         }
 
         $owner = $this->ownerModel->findById($id);
@@ -144,20 +147,20 @@ class OwnerController extends Controller {
         if (empty($data['owner_name'])) {
             $_SESSION['flash_error'] = 'Owner Name is required.';
             $_SESSION['form_data'] = $data;
-            $this->redirect('/owners/edit/' . $id);
-            return;
+            header('Location: /owners/edit/' . $id);
+            exit;
         }
          if ($this->ownerModel->ownerNameExists($data['owner_name'], $id)) {
              $_SESSION['flash_error'] = 'Owner Name already exists.';
              $_SESSION['form_data'] = $data;
-             $this->redirect('/owners/edit/' . $id);
-             return;
+             header('Location: /owners/edit/' . $id);
+             exit;
         }
 
         if ($this->ownerModel->update($id, $data) >= 0) {
             $_SESSION['flash_success'] = 'Owner updated successfully.';
             unset($_SESSION['form_data']);
-            $this->redirect('/owners/view/' . $id); // Or redirect('/owners');
+            header('Location: /owners/view/' . $id); // Or redirect('/owners');
         } else {
             $_SESSION['flash_error'] = 'Failed to update owner.';
             $_SESSION['form_data'] = $data;
@@ -168,27 +171,27 @@ class OwnerController extends Controller {
     /**
      * Remove the specified owner.
      */
-    public function delete(int $id): void {
+    public function delete(int $id): void
+    {
         // CSRF Check
         if (!SecurityHelper::validateToken($_POST[SecurityHelper::getFormInputName()] ?? null)) {
             $_SESSION['flash_error'] = 'Invalid request. Please try again.';
-            $this->redirect('/owners');
-            return;
+             header('Location: /owners');
+            exit;
         }
 
         $owner = $this->ownerModel->findById($id);
         if (!$owner) {
             $_SESSION['flash_error'] = 'Owner not found.';
-            $this->redirect('/owners');
-            return;
+             header('Location: /owners');
+            exit;
         }
 
         if ($this->ownerModel->delete($id) > 0) {
             $_SESSION['flash_success'] = 'Owner deleted successfully.';
         } else {
             $_SESSION['flash_error'] = 'Failed to delete owner. Check if it is linked to projects (though links should become NULL).';
-        }
-        $this->redirect('/owners');
+        }        header('Location: /owners');
     }
 
     // Placeholder for chart action if needed later

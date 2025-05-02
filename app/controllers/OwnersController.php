@@ -6,10 +6,9 @@ use AppLibrariesAuth;
 use AppDatabase;
 use AppModelsOwner;
 
-class OwnersController
+class OwnersController extends BaseController
 {
     protected $controller = 'Owners';
-    protected $action;
     protected $db;
 
     /**
@@ -17,6 +16,7 @@ class OwnersController
      * @param Database $db The database instance.
      */
     public function __construct(Database $db)
+
     {
         $this->db = $db;
     }

@@ -5,27 +5,28 @@
 namespace App\Controllers;
 
 use App\Controller;
+use App\Database;
 use App\Models\Staff;
 use App\Models\StaffPosition;
 use App\Models\User; // Need User model for linking
 use App\Helpers\SecurityHelper;
 use App\Libraries\Auth;
 
-class StaffController extends Controller {
+class StaffController extends BaseController {
 
     private Staff $staffModel;
     private StaffPosition $positionModel;
     private User $userModel;
 
-    public function __construct() {
-        
-        parent::__construct();       
-        $this->staffModel = new Staff($this->db);
-        $this->positionModel = new StaffPosition($this->db);
+    public function __construct(Database $db)
+    {
+        parent::__construct($db);
+        $this->staffModel = new Staff($this->db); 
+        $this->positionModel = new StaffPosition($this->db); 
         $this->userModel = new User($this->db); // For user linking dropdown
-        
     }
     
+
      protected function before()
     {
         // Check if the user is logged in

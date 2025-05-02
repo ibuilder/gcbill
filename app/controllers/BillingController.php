@@ -1,14 +1,13 @@
 <?php
-// filepath: c:\Users\iphoe\OneDrive\Documents\Server\construction-billing\production\construction-billing-app\app\Controllers\BillingController.php
-<?php
+
+namespace AppControllers;
 
 use TCPDF;
 
-namespace App\Controllers;
-
-use App\Controller;
-use App\Models\Billing;
-use App\Models\BillingDetail;
+use AppDatabase;
+use AppLibrariesAuth;
+use AppModelsBilling;
+use AppModelsBillingDetail;
 use App\Models\Project;
 use App\Models\Sov;
 use App\Helpers\SecurityHelper;
@@ -16,22 +15,20 @@ use App\Helpers\CalculationHelper; // We'll create this helper later
 use App\Helpers\ViewHelper;
 
 
-
-class BillingController extends Controller {
-
-    private Billing $billingModel;
-    private BillingDetail $billingDetailModel;
+class BillingController extends BaseController {
+    private Billing $billingModel;   
+    private BillingDetail $billingDetailModel;    
     private Project $projectModel;
     private Sov $sovModel;
 
     
-    public function __construct() {
-        parent::__construct();
-        if (!$this->auth->isLoggedIn()) {
-            $this->redirect('/login');
-        }
-        $this->billingModel = new Billing($this->db);
+    public function __construct(Database $db) {
+        parent::__construct($db);
+        
+
+        $this->billingModel = new Billing($this->db);    
         $this->billingDetailModel = new BillingDetail($this->db);
+
         $this->projectModel = new Project($this->db);
         $this->sovModel = new Sov($this->db);
     }
@@ -40,15 +37,15 @@ class BillingController extends Controller {
      * List all billings for a specific project.
      * Accessed via /projects/{projectId}/billings
      */
-    public function index(int $projectId): void {
+    public function index(int $projectId) {
         $project = $this->projectModel->findById($projectId);
         if (!$project) {
             $_SESSION['flash_error'] = 'Project not found.';
-            $this->redirect('/projects');
-            return;
+            header('Location: /projects');
+            exit;
         }
 
-        $billings = $this->billingModel->findByProjectId($projectId);
+        $billings = $this->billingModel->findByProjectId($projectId); 
         $nextBillingNumber = $this->billingModel->getNextBillingNumber($projectId);
 
         $this->view->output('billings/list.html', [
@@ -64,12 +61,12 @@ class BillingController extends Controller {
      * Show the form to create a new billing period header.
      * Accessed via /projects/{projectId}/billings/create
      */
-    public function create(int $projectId): void {
+    public function create(int $projectId) {
         $project = $this->projectModel->findById($projectId);
         if (!$project) {
             $_SESSION['flash_error'] = 'Project not found.';
-            $this->redirect('/projects');
-            return;
+            header('Location: /projects');
+            exit;
         }
 
         $nextBillingNumber = $this->billingModel->getNextBillingNumber($projectId);
@@ -102,20 +99,22 @@ class BillingController extends Controller {
      * Store a new billing period header.
      * Accessed via POST /projects/{projectId}/billings/store
      */
-    public function store(int $projectId): void {
+    public function store(int $projectId) {
         if (!SecurityHelper::validateToken($_POST[SecurityHelper::getFormInputName()] ?? null)) {
             $_SESSION['flash_error'] = 'Invalid request token.';
-            $this->redirect('/projects/' . $projectId . '/billings/create'); return;
+            header('Location: /projects/' . $projectId . '/billings/create');
+            exit;
         }
 
         $project = $this->projectModel->findById($projectId);
         if (!$project) {
             $_SESSION['flash_error'] = 'Project not found.';
-            $this->redirect('/projects'); return;
+             header('Location: /projects');
+             exit;
         }
 
         $data = $_POST;
-        $data['project_id'] = $projectId; // Ensure project ID is set
+        $data['project_id'] = $projectId;
 
         // Basic Validation
         if (empty($data['billing_number']) || empty($data['period_end_date']) || empty($data['billing_date'])) {
@@ -136,7 +135,8 @@ class BillingController extends Controller {
             $_SESSION['flash_success'] = 'Billing period created successfully. Now enter the details.';
             unset($_SESSION['form_data']);
             // Redirect to the edit page for the newly created billing
-            $this->redirect('/billings/edit/' . $newBillingId);
+            header('Location: /billings/edit/' . $newBillingId);
+            exit;
         } else {
             $_SESSION['flash_error'] = 'Failed to create billing period.';
             $_SESSION['form_data'] = $data;
@@ -148,19 +148,21 @@ class BillingController extends Controller {
      * Show the main billing edit form (AIA G702/G703 style).
      * Accessed via /billings/edit/{billingId}
      */
-    public function edit(int $billingId): void {
+    public function edit(int $billingId) {
         
         if (!SecurityHelper::validateToken($_POST[SecurityHelper::getFormInputName()] ?? null) && isset($_POST[SecurityHelper::getFormInputName()])) {
             $_SESSION['flash_error'] = 'Invalid request token.';
-             $this->redirect('/billings/edit/' . $billingId); return;
+             header('Location: /billings/edit/' . $billingId);
+             exit;
          }
 
 
         $billing = $this->billingModel->findById($billingId);
         if (!$billing) {
             $_SESSION['flash_error'] = 'Billing not found.';
-            $this->redirect('/projects'); // Or redirect to a relevant project page if possible
-            return;
+            header('Location: /projects');
+            exit;// Or redirect to a relevant project page if possible
+            
         }
 
         $project = $this->projectModel->findById($billing['project_id']);
@@ -194,11 +196,13 @@ class BillingController extends Controller {
      * Includes calculation of previous payments.
      * Accessed via GET /billings/{billingId}/data
      */
-    public function getBillingData(int $billingId): void {
+    public function getBillingData(int $billingId) {
         $billing = $this->billingModel->findById($billingId);
         if (!$billing) {
-            $this->jsonResponse(['success' => false, 'message' => 'Billing not found.'], 404); return;
+            $this->jsonResponse(['success' => false, 'message' => 'Billing not found.'], 404);
+             exit;
         }
+        
 
         $projectId = $billing['project_id'];
         $billingNumber = $billing['billing_number'];
@@ -289,12 +293,14 @@ class BillingController extends Controller {
      * Update billing details (bulk save).
      * Accessed via POST /billings/update/{billingId}
      */
-    public function update(int $billingId): void {
+    public function update(int $billingId) {
          if (!SecurityHelper::validateToken($_POST[SecurityHelper::getFormInputName()] ?? null)) {
-             $this->jsonResponse(['success' => false, 'message' => 'Invalid request token.'], 403); return;
+             $this->jsonResponse(['success' => false, 'message' => 'Invalid request token.'], 403);
+              exit;
          }
 
          $billing = $this->billingModel->findById($billingId);
+
          if (!$billing) {
              $this->jsonResponse(['success' => false, 'message' => 'Billing not found.'], 404); return;
          }
@@ -354,14 +360,16 @@ class BillingController extends Controller {
     }
 
     /**
-     * Delete a billing period (likely only drafts).
+     * Delete a billing period (likely only drafts).   
      * Accessed via POST /billings/delete/{billingId}
      */
-    public function delete(int $billingId): void {
+    public function delete(int $billingId) {
          $billing = $this->billingModel->findById($billingId);
           if (!$billing) {
               $_SESSION['flash_error'] = 'Billing not found.';
-              $this->redirect('/projects'); return;
+               header('Location: /projects');
+               exit;
+
           }
         
           // Check billing status
@@ -373,7 +381,8 @@ class BillingController extends Controller {
           $projectId = $billing['project_id']; // Get project ID before deleting
           if (!SecurityHelper::validateToken($_POST[SecurityHelper::getFormInputName()] ?? null) && isset($_POST[SecurityHelper::getFormInputName()])) {
               $_SESSION['flash_error'] = 'Invalid request token.';
-               $this->redirect('/projects/' . $projectId . '/billings'); return;
+              header('Location: /projects/' . $projectId . '/billings');
+              exit;
           }
 
          if ($this->billingModel->delete($billingId) > 0) {
@@ -382,7 +391,8 @@ class BillingController extends Controller {
              $_SESSION['flash_error'] = 'Failed to delete billing.';
          }
          $this->redirect('/projects/' . $projectId . '/billings');
-    /**
+     }
+     /**
      * Display a non-editable view of the billing application.
      */
     public function submit(int $billingId): void
@@ -517,7 +527,7 @@ class BillingController extends Controller {
     }
 
     /** Helper for JSON responses */
-    private function jsonResponse(array $data, int $statusCode = 200): void {
+    private function jsonResponse(array $data, int $statusCode = 200) {
         http_response_code($statusCode);
         header('Content-Type: application/json');
         echo json_encode($data);

@@ -1,17 +1,23 @@
 <?php
 
-namespace App\Controllers;
+namespace AppControllers;
 
-use App\Libraries\Auth;
-use App\Models\ScheduleOfValues;
-use App\Models\Project;
+use AppDatabase;
+use AppLibrariesAuth;
+use AppModelsScheduleOfValues;
+use AppModelsProject;
 
 class ScheduleOfValuesController extends BaseController
 {
-    protected function before()
+    public function __construct(Database $db)
+    {
+        parent::__construct($db);
+    }
+
+    protected function before($action)
     {
         // Check if the user is logged in
-        if (!Auth::isLoggedIn()) {
+        if (!Auth::isLoggedIn()) {    
             // Redirect to the login page if not logged in
             header('Location: /login');
             exit;
@@ -30,13 +36,13 @@ class ScheduleOfValuesController extends BaseController
 
     public function index($projectId)
     {
-        $this->before();
-        $project = Project::find($projectId);
+        $this->before('index');
+        $project = Project::find($projectId, $this->db);
         if (!$project) {
             header('Location: /404');
             exit;
         }
-        $scheduleOfValues = ScheduleOfValues::where('project_id', $projectId)->get();
+        $scheduleOfValues = ScheduleOfValues::where('project_id', $projectId, $this->db)->get();
         return $this->view('schedule-of-values/index.html', ['schedule_of_values' => $scheduleOfValues, 'project' => $project]);
     }
 
@@ -44,7 +50,7 @@ class ScheduleOfValuesController extends BaseController
     {
         $this->before();
         $scheduleOfValue = ScheduleOfValues::find($id);
-        if (!$scheduleOfValue) {
+        if (!$scheduleOfValue, $this->db) {
             header('Location: /404');
             exit;
         }
@@ -54,7 +60,7 @@ class ScheduleOfValuesController extends BaseController
     public function create($data)
     {
         $this->before();
-        $scheduleOfValue = new ScheduleOfValues($data);
+        $scheduleOfValue = new ScheduleOfValues($this->db,$data);
         $scheduleOfValue->save();
         return $scheduleOfValue->id;
     }
@@ -62,7 +68,7 @@ class ScheduleOfValuesController extends BaseController
     public function edit($id, $data)
     {
         $this->before();
-        $scheduleOfValue = ScheduleOfValues::find($id);
+        $scheduleOfValue = ScheduleOfValues::find($id, $this->db);
         if (!$scheduleOfValue) {
             header('Location: /404');
             exit;
@@ -75,7 +81,7 @@ class ScheduleOfValuesController extends BaseController
     public function delete($id)
     {
         $this->before();
-        $scheduleOfValue = ScheduleOfValues::find($id);
+        $scheduleOfValue = ScheduleOfValues::find($id, $this->db);
         if (!$scheduleOfValue) {
             header('Location: /404');
             exit;

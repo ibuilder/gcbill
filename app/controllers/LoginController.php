@@ -1,12 +1,18 @@
 <?php
 
-namespace App\Controllers;
+namespace AppControllers;
 
-use App\Libraries\Auth;
-use App\Models\User;
+use AppLibrariesAuth;
+use AppModelsUser;
+use AppDatabase;
 
 class LoginController extends BaseController
 {
+    public function __construct(Database $db)
+    {
+        parent::__construct($db);
+    }
+
     public function index()
     {
         if (Auth::isLoggedIn()) {
@@ -14,7 +20,7 @@ class LoginController extends BaseController
             exit;
         }
 
-        return $this->view('login/index');
+        return $this->view('auth/login');
     }
 
     public function login($data)
@@ -33,7 +39,7 @@ class LoginController extends BaseController
             exit;
         }
         
-        $userModel = new User();
+        $userModel = new User($this->db);
         $user = $userModel->getByUsername($username);
 
         if (!$user) {
@@ -42,8 +48,8 @@ class LoginController extends BaseController
             exit;
         }
         
-
-        if (Auth::login($username, $password)) {
+        if (password_verify($password, $user->password)) {
+            Auth::login($user);
             header('Location: /');
             exit;
         } else {

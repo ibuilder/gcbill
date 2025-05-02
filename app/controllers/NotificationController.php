@@ -1,51 +1,44 @@
 <?php
 
-namespace App\Controllers;
+namespace AppControllers;
 
-use App\Libraries\Auth;
-use App\Models\Notification;
-use App\Models\User;
+use AppLibrariesAuth;
+use AppDatabase;
+use AppModelsNotification;
 
-class NotificationController extends \Core\Controller
+class NotificationController extends BaseController
 {
-    protected function before()
+    public function __construct(Database $db)
     {
-        if (!Auth::isLoggedIn()) {
-            header('Location: /login');
-            exit;
-        }
-
-        $user = $_SESSION['user'];
-
-        if (!Auth::checkPermission($user, $this->controller, $this->action)) {
-            header('Location: /403');
-            exit;
-        }
+        parent::__construct($db);
     }
 
     public function index()
     {
-        $user = $_SESSION['user'];
-        $notifications = Notification::where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $user = $_SESSION['user'];        
+        $notificationModel = new Notification($this->db);
+        $notifications = $notificationModel->where('user_id', $user->id)
+        ->orderBy('created_at', 'desc')
+        ->all();
+
+        return $this->view('notifications/index', ['notifications' => $notifications]);
+    }
 
         $this->view('notifications/index.html', ['notifications' => $notifications]);
     }
 
     public function view($id)
     {
-        $user = $_SESSION['user'];
-        $notification = Notification::find($id);
+      $user = $_SESSION['user'];
+      $notificationModel = new Notification($this->db);
+      $notification = $notificationModel->find($id);
 
-        if (!$notification || $notification->user_id != $user->id) {
-            header('Location: /404');
-            exit;
-        }
-
-        $notification->is_read = true;
-        $notification->save();
-
-        $this->view('notifications/view.html', ['notification' => $notification]);
+      if (!$notification || $notification->user_id != $user->id) {
+          header('Location: /404');
+          exit;
+      }
+      $notificationModel->update($id,['is_read' => true]);
+      return $this->view('notifications/view', ['notification' => $notification]);
+        
     }
 }

@@ -1,29 +1,24 @@
 <?php
 
-namespace App\Controllers;
+namespace AppControllers;
 
-use App\Libraries\Auth;
-use App\Models\Project;
-use App\Models\BillingPeriod;
-use App\Models\SovBillingItem;
-use App\Models\GeneralCondition;
-use App\Models\ChangeOrder;
-use App\Models\Staff;
-use App\Models\StaffTimeEntry;
+use AppDatabase;
+use AppModelsProject;
+use AppModelsBillingPeriod;
+use AppModelsSovBillingItem;
+use AppModelsGeneralCondition;
+use AppModelsChangeOrder;
+use AppModelsStaff;
+use AppModelsStaffTimeEntry;
 
-
-
-class ReportController extends Controller
+class ReportController extends BaseController
 {
-    protected function before()
+    public function __construct(Database $db)
     {
-        // Check if the user is logged in
-        if (!Auth::isLoggedIn()) {
-            // Redirect to the login page if not logged in
-            header('Location: /login');
-            exit;
-        }
+        parent::__construct($db);
+    }
 
+    protected function before() {
         // Get the current user from the session
         $user = $_SESSION['user'];
 
@@ -34,17 +29,17 @@ class ReportController extends Controller
             exit;
         }
     }
-    
+
     public function projectCostSummary($projectId)
     {
         $this->before();
 
         // Load the models
-        $projectModel = new Project();
-        $billingPeriodModel = new BillingPeriod();
-        $sovBillingItemModel = new SovBillingItem();
-        $generalConditionModel = new GeneralCondition();
-        $changeOrderModel = new ChangeOrder();
+        $projectModel = new Project($this->db);
+        $billingPeriodModel = new BillingPeriod($this->db);
+        $sovBillingItemModel = new SovBillingItem($this->db);
+        $generalConditionModel = new GeneralCondition($this->db);
+        $changeOrderModel = new ChangeOrder($this->db);
 
         // Get the project data
         $project = $projectModel->find($projectId);
@@ -64,7 +59,7 @@ class ReportController extends Controller
             $billedItems = $sovBillingItemModel->where('billing_period_id', $period['id'])->get();
             foreach($billedItems as $item){
                 $totalBilled += ($item['work_completed_this_period'] + $item['materials_stored_this_period']);
-            }
+        }
             // Calculate retainage for the period (example calculation)
             $totalRetainage += $totalBilled * ($project['retainage_percentage'] / 100); 
         }
@@ -91,9 +86,9 @@ class ReportController extends Controller
         $this->before();
 
         // Load the models
-        $projectModel = new Project();
-        $billingPeriodModel = new BillingPeriod();
-        $sovBillingItemModel = new SovBillingItem();
+        $projectModel = new Project($this->db);
+        $billingPeriodModel = new BillingPeriod($this->db);
+        $sovBillingItemModel = new SovBillingItem($this->db);
 
         // Get the project data
         $project = $projectModel->find($projectId);
@@ -105,7 +100,7 @@ class ReportController extends Controller
 
         // Get billing periods for the project
         $billingPeriods = $billingPeriodModel->where('project_id', $projectId)->get();
-        
+
         $billingsData = [];
         // Calculate total billed and retainage
         foreach ($billingPeriods as $period) {
@@ -129,8 +124,8 @@ class ReportController extends Controller
     {
         $this->before();
         // Load the models
-        $projectModel = new Project();
-        $billingPeriodModel = new BillingPeriod();
+        $projectModel = new Project($this->db);
+        $billingPeriodModel = new BillingPeriod($this->db);
 
         // Get the project data
         $project = $projectModel->find($projectId);
@@ -142,7 +137,7 @@ class ReportController extends Controller
 
         // Get billing periods for the project
         $billingPeriods = $billingPeriodModel->where('project_id', $projectId)->get();
-        
+
         $totalBilled = 0;
         $totalRetainage = 0;
         foreach ($billingPeriods as $period) {
@@ -151,7 +146,7 @@ class ReportController extends Controller
                 $totalBilled += ($item['work_completed_this_period'] + $item['materials_stored_this_period']);
             }
         }
-        
+
         $totalRetainage = $totalBilled * ($project['retainage_percentage'] / 100);
 
         $data = compact('project', 'totalBilled', 'totalRetainage');
@@ -163,9 +158,9 @@ class ReportController extends Controller
     {
         $this->before();
 
-         // Load the models
-         $projectModel = new Project();
-         $staffModel = new Staff();
+        // Load the models
+        $projectModel = new Project($this->db);
+        $staffModel = new Staff($this->db);
          $staffTimeEntryModel = new StaffTimeEntry();
  
          // Get the project data
@@ -185,7 +180,7 @@ class ReportController extends Controller
              ->where('entry_date', '>=', $startDate)
              ->where('entry_date', '<=', $endDate)
              ->get();
-        
+
         $staffData = [];
         foreach($staffMembers as $staff){
             $staffData[] = [
@@ -194,6 +189,7 @@ class ReportController extends Controller
             ];
         }
          $data = compact('project', 'staffData', 'startDate', 'endDate');
+        // Pass the data to the view
         $this->view('reports/staffTimeTracking', $data);
     }
 }

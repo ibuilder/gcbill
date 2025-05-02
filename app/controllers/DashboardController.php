@@ -1,28 +1,27 @@
 <?php
 
-namespace App\Controllers;
+namespace AppControllers;
 
-use App\Controller; // Extends base Controller
+use AppDatabase;
 
-class DashboardController extends Controller {
-
-    public function __construct() {
-        parent::__construct();
-        // Ensure user is logged in (handled globally in index.php, but good practice)
-        if (!$this->auth->isLoggedIn()) {
-            $this->redirect('/login');
-        }
+class DashboardController extends BaseController
+{
+    public function __construct(Database $db)
+    {
+        parent::__construct($db);
     }
+
 
     /**
      * Show the main application dashboard.
      */
-    public function index(): void {
+    public function index()
+    {
         // Prepare data for the dashboard
         // Example: Get counts, recent activity, etc.
         $totalProjects = $this->db->selectValue("SELECT COUNT(*) FROM projects");
         $activeProjects = $this->db->selectValue("SELECT COUNT(*) FROM projects WHERE status = 'active'");
-        $activeProjectsContractAmount = $this->db->selectValue("SELECT SUM(contract_amount) FROM projects WHERE status = 'active'");
+        $activeProjectsContractAmount = $this->db->selectValue("SELECT COALESCE(SUM(contract_amount),0) FROM projects WHERE status = 'active'");
         $draftBillings = $this->db->selectValue("SELECT COUNT(*) FROM billings WHERE status = 'draft'");
         $submittedBillings = $this->db->selectValue("SELECT COUNT(*) FROM billings WHERE status = 'submitted'");
         $approvedBillings = $this->db->selectValue("SELECT COUNT(*) FROM billings WHERE status = 'approved'");
@@ -38,12 +37,12 @@ class DashboardController extends Controller {
             FROM billings b
             WHERE b.status = 'approved'"
         );
-        $totalPaidBillingsAmount = $this->db->selectValue("SELECT COALESCE(SUM(total_earned_less_retainage),0) FROM billings WHERE status = 'paid'");
-
+        $totalPaidBillingsAmount = $this->db->selectValue("SELECT COALESCE(SUM(total_earned_less_retainage),0) FROM billings WHERE status = 'paid'");        
         $totalCurrentPaymentDues = $totalApprovedBillingsAmount - $totalPaidBillingsAmount;
-        
+
         $totalRetainage = $this->db->selectValue(
             "SELECT COALESCE(SUM(
+
                 (SELECT 
                   COALESCE(SUM(bd.work_completed_this_period + bd.materials_stored_this_period), 0) * b.retainage_rate
                  FROM billing_details bd 
@@ -67,6 +66,6 @@ class DashboardController extends Controller {
         ];
 
         // Render the dashboard view
-        $this->view->output('dashboard.html', $viewData);
+        return $this->view('dashboard', $viewData);
     }
 }

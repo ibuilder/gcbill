@@ -1,30 +1,35 @@
 <?php
-namespace App\Controllers;
+namespace AppControllers;
 
-use App\Libraries\Auth;
-use App\Models\BillingPeriod;
-use App\Database;
+use AppLibrariesAuth;
+use AppModelsBillingPeriod;
+use AppDatabase;
 
-class BillingPeriodsController
+class BillingPeriodsController extends BaseController
 {
-    protected $controller = 'BillingPeriods';
-    protected $action;
-    protected $db;
+    protected string $controller = 'BillingPeriods';
+    protected string $action;
 
+    /**
+     * Constructor for the BillingPeriodsController class.
+     *
+     * @param Database $db The database instance.
+     */
     public function __construct(Database $db)
     {
-        $this->db = $db;
+        parent::__construct($db);
     }
-    protected function before($action)
+
+    public function before(string $action): void
     {
         $this->action = $action;
         // Check if the user is logged in
-        if (!Auth::isLoggedIn()) {
+        if (!Auth::isLoggedIn())
+        {
             // Redirect to the login page if not logged in
             header('Location: /login');
             exit;
         }
-
         // Get the current user from the session
         $user = $_SESSION['user'];
 
@@ -35,23 +40,26 @@ class BillingPeriodsController
             exit;
         }
     }
+
     /**
      * Index action: Show all billing periods for a given project ID.
-     * @param int $projectId The project ID.
+     *
+     * @param integer $projectId The project ID.
      * @return string JSON encoded data with the project ID and billing periods.
      */
     public function index(int $projectId): string
     {
-        $this->before('index');        
-        try{
-            $billingPeriods = BillingPeriod::where('project_id', $projectId)->get();
+        $this->before('index');
+        try {
+            $billingPeriod = new BillingPeriod($this->db);
+            $billingPeriods = $billingPeriod->where('project_id', $projectId)->get();
             return json_encode(['project_id' => $projectId, 'billing_periods' => $billingPeriods]);
-        }catch(Exception $e){
+        } catch (\Exception $e) {
             error_log('Error in BillingPeriodsController::index: ' . $e->getMessage());
             return json_encode(['error' => 'An error occurred while processing your request.']);
         }
     }
-
+    
     /**
      * View action: Show a specific billing period.
      * @param int $id The billing period ID.
@@ -60,13 +68,14 @@ class BillingPeriodsController
     public function view(int $id): string
     {
         $this->before('view');
-        try{
-            $billingPeriod = BillingPeriod::find($id);
-            if(!$billingPeriod){
+        try {
+            $billingPeriod = new BillingPeriod($this->db);
+            $result = $billingPeriod->find($id);
+            if (!$result) {
                 return json_encode(['error' => 'Billing period not found.']);
             }
-            return json_encode(['billing_period' => $billingPeriod]);
-        }catch(Exception $e){
+            return json_encode(['billing_period' => $result]);
+        } catch (\Exception $e) {
             error_log('Error in BillingPeriodsController::view: ' . $e->getMessage());
             return json_encode(['error' => 'An error occurred while processing your request.']);
         }
@@ -81,15 +90,16 @@ class BillingPeriodsController
     public function create(array $data): string
     {
         $this->before('create');        
-        try{
-            $billingPeriod = new BillingPeriod($data);
-            $result = $billingPeriod->create($data);
-            if(!$result){
+        try {
+            $billingPeriod = new BillingPeriod($this->db);
+            $result = $billingPeriod->insert($data);
+            if (!$result) {
                 return json_encode(['error' => 'An error occurred while creating the billing period.']);
             }
             return json_encode(['id' => $result]);
-        }catch(Exception $e){
+        } catch (\Exception $e) {
             error_log('Error in BillingPeriodsController::create: ' . $e->getMessage());
+            
             return json_encode(['error' => 'An error occurred while processing your request.']);
         }
     }    
@@ -103,15 +113,16 @@ class BillingPeriodsController
     public function edit(int $id, array $data): string
     {
         $this->before('edit');
-        try{
-            $billingPeriod = BillingPeriod::find($id);
-            if(!$billingPeriod){
+        try {
+            $billingPeriod = new BillingPeriod($this->db);
+            $result = $billingPeriod->update($id, $data);
+            if ($result === -1) {
                 return json_encode(['error' => 'Billing period not found.']);
             }
-            $result = $billingPeriod->update($id, $data);
-            if(!$result){
+            if (!$result) {
                 return json_encode(['error' => 'An error occurred while updating the billing period.']);
             }
+            
             return json_encode(['id' => $id]);
         }catch(Exception $e){
             error_log('Error in BillingPeriodsController::edit: ' . $e->getMessage());
@@ -127,16 +138,17 @@ class BillingPeriodsController
     public function delete(int $id): string
     {
         $this->before('delete');
-        try{
-            $billingPeriod = BillingPeriod::find($id);
-            if(!$billingPeriod){
+        try {
+            $billingPeriod = new BillingPeriod($this->db);
+            $result = $billingPeriod->remove($id);
+            if ($result === -1) {
                 return json_encode(['error' => 'Billing period not found.']);
             }
-            $result = $billingPeriod->delete($id);
-            if(!$result){
+            if (!$result) {
                 return json_encode(['error' => 'An error occurred while deleting the billing period.']);
             }
             return json_encode(['id' => $id]);
+        } catch (\Exception $e) {
         }catch(Exception $e){
             error_log('Error in BillingPeriodsController::delete: ' . $e->getMessage());
             return json_encode(['error' => 'An error occurred while processing your request.']);
@@ -144,17 +156,15 @@ class BillingPeriodsController
     }
         
     /**
-     * Magic method to handle invalid actions.
-     * @param string $method The method name.
-     * @param array $args The arguments.
+     * Magic method to handle invalid actions
+     * @param string $method
+     * @param array $args
      * @return void
      */
-
     public function __call(string $method, array $args): void
     {
         // Check if the requested action is valid
         if (method_exists($this, $method)) {
-
             call_user_func_array([$this, $method], $args);
         } else {
             header('HTTP/1.1 404 Not Found');
