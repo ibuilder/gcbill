@@ -19,6 +19,7 @@
             "App\\": "app/"
         },
         "files": [
+            "app/helpers/Helper.php",
             "app/helpers/AuthHelper.php",
             "app/helpers/auth_helper.php",
             "app/helpers/validation_helper.php",
