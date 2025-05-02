@@ -1,0 +1,18 @@
+Fri May  2 01:34:21 AM UTC 2025: Starting run.sh script
+Checking if port 8081 is in use...
+COMMAND     PID USER FD   TYPE DEVICE SIZE/OFF NODE NAME
+.php-wrap 36057 user 4u  IPv4 718735      0t0  TCP localhost:8081 (LISTEN)
+Port 8081 is in use
+Killing process on port 8081...
+Process on port 8081 killed
+[Fri May  2 01:34:21 2025] PHP 8.2.27 Development Server (http://localhost:8081) started
+Fri May  2 01:37:34 AM UTC 2025: Starting run.sh script
+Checking if port 8081 is in use...
+COMMAND     PID USER FD   TYPE DEVICE SIZE/OFF NODE NAME
+.php-wrap 36565 user 4u  IPv4 728453      0t0  TCP localhost:8081 (LISTEN)
+Port 8081 is in use
+Killing process on port 8081...
+Process on port 8081 killed
+The port 8081 is already in use or the server failed to start. Please check the server.log file.
+Fri May  2 01:37:34 AM UTC 2025: Finished run.sh script
+[Fri May  2 01:37:34 2025] PHP 8.2.27 Development Server (http://localhost:8081) started

@@ -1,4 +1,4 @@
-### README.md
+
 
 Here’s a sample README.md file detailing the file structure and roadmap:
 
@@ -52,111 +52,7 @@ A comprehensive PHP application for general contractor owner billings with Boots
 │   └── auth/                  # Authentication templates
 └── database/                  # Database files and migrations
 ```
-### Application Structure
 
-Here’s a proposed file structure for the application:
-
-```
-/
-├── index.php                  # Application entry point
-├── README.md                  # Project documentation
-├── composer.json              # PHP dependencies
-├── .htaccess                  # URL rewriting and security
-├── config/                    # Configuration files
-│   ├── config.php             # Main configuration
-│   ├── database.php           # Database connection settings
-│   └── routes.php             # Application routes
-├── app/                       # Application core files
-│   ├── bootstrap.php          # Application bootstrapper
-│   ├── controllers/           # Controller classes
-│   │   ├── BillingController.php
-│   │   ├── DashboardController.php
-│   │   ├── StaffController.php
-│   │   ├── OwnerController.php
-│   │   ├── GeneralConditionsController.php
-│   │   ├── GMPController.php
-│   │   ├── AIADocumentController.php
-│   │   └── UserController.php
-│   ├── models/                # Data models
-│   │   ├── Staff.php
-│   │   ├── Owner.php
-│   │   ├── GeneralCondition.php
-│   │   ├── StaffSalary.php
-│   │   ├── Expense.php
-│   │   ├── GMP.php
-│   │   ├── SOV.php            # Schedule of Values
-│   │   ├── Billing.php
-│   │   └── User.php
-│   ├── helpers/               # Helper functions
-│   │   ├── pdf_helper.php
-│   │   ├── excel_helper.php
-│   │   ├── validation_helper.php
-│   │   └── auth_helper.php
-│   └── libraries/             # Custom libraries
-│       ├── AIA.php            # AIA document generator
-│       ├── ExcelExport.php
-│       └── PDFExport.php
-├── public/                    # Publicly accessible files
-│   ├── css/                   # CSS files
-│   │   ├── bootstrap.min.css
-│   │   ├── style.css
-│   │   └── amp-custom.css     # Google AMP styles
-│   ├── js/                    # JavaScript files
-│   │   ├── bootstrap.min.js
-│   │   ├── jquery.min.js
-│   │   ├── web3.min.js
-│   │   ├── charts.js
-│   │   ├── billing.js
-│   │   └── app.js
-│   ├── img/                   # Image files
-│   │   ├── logo.svg
-│   │   ├── icons/
-│   │   │   ├── dashboard.svg
-│   │   │   ├── billing.svg
-│   │   │   ├── staff.svg
-│   │   │   ├── documents.svg
-│   │   │   └── settings.svg
-│   │   └── favicon.ico
-│   └── uploads/               # User uploaded files
-├── templates/                 # HTML templates
-│   ├── partials/              # Reusable page components
-│   │   ├── header.html
-│   │   ├── footer.html
-│   │   ├── sidebar.html
-│   │   └── modals.html
-│   ├── dashboard.html         # Main dashboard
-│   ├── staff/                 # Staff management templates
-│   │   ├── list.html
-│   │   ├── add.html
-│   │   ├── edit.html
-│   │   └── chart.html
-│   ├── owners/                # Owner management templates
-│   │   ├── list.html
-│   │   ├── add.html
-│   │   ├── edit.html
-│   │   └── chart.html
-│   ├── general-conditions/    # General conditions templates
-│   │   ├── salary-rates.html
-│   │   ├── expenses.html
-│   │   └── settings.html
-│   ├── gmp/                   # GMP management templates
-│   │   ├── setup.html
-│   │   ├── sov.html           # Schedule of Values
-│   │   └── tracking.html
-│   ├── aia/                   # AIA document templates
-│   │   ├── g702.html
-│   │   └── g703.html
-│   ├── settings/              # Application settings
-│   │   ├── general.html
-│   │   ├── users.html
-│   │   └── company.html
-│   └── auth/                  # Authentication templates
-│       ├── login.html
-│       └── forgot-password.html
-└── database/                  # Database files and migrations
-    ├── migrations/
-    └── seeds/
-```
 ## Required SVG Files
 
 The following SVG files need to be generated:
@@ -180,10 +76,14 @@ The following SVG files need to be generated:
 1. Clone the repository
 2. Run `composer install` to install dependencies
 3. Create a MySQL database
-4. Configure database connection in `config/database.php`
-5. Run database migrations: `php database/migrate.php`
-6. Point your web server to the project root
-7. Access the application via browser
+4. Configure database connection in `config/database.php`.
+5. Run database migrations: `php database/migrate.php`.
+6. Point your web server to the project root.
+7. Access the application via browser.
+
+**Important:** You must keep this terminal open while you are using the application. If you close it, the server will stop.
+
+Please ensure that no other process is running on port 8081 before running the application.
 
 ## Development Roadmap
 
