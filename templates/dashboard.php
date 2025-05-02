@@ -3,7 +3,7 @@
 // Pass necessary data like pageTitle and config to the header
 global $config; // Make config available
 echo $view->includePartial('partials/header.php', [
-    'pageTitle' => $pageTitle ?? 'Dashboard',
+'pageTitle' => $pageTitle ?? 'Dashboard',
     'config' => $config,
     'currentUser' => $currentUser ?? null, // Pass user data
     'activeNav' => $activeNav ?? null // Pass active nav indicator
