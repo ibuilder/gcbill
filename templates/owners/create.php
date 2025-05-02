@@ -1,7 +1,8 @@
 <!-- filepath: c:\Users\iphoe\OneDrive\Documents\Server\construction-billing\production\construction-billing-app\templates\owners\create.html -->
 <?php
 global $config;
-echo $view->includePartial('partials/header.html', [
+// Corrected: Include .php partial
+echo $view->includePartial('partials/header.php', [
     'pageTitle' => $pageTitle ?? 'Create Owner',
     'config' => $config,
     'currentUser' => $currentUser ?? null,
@@ -17,12 +18,14 @@ echo $view->includePartial('partials/header.html', [
 $ownerData = $_SESSION['form_data'] ?? $owner ?? [];
 unset($_SESSION['form_data']);
 
-echo $view->includePartial('owners/_form.html', [
+// Corrected: Include .php partial and pass data explicitly
+echo $view->includePartial('owners/_form.php', [
     'owner' => $ownerData,
     'formAction' => $formAction ?? '/owners/store'
 ]);
 ?>
 
 <?php
-echo $view->includePartial('partials/footer.html', ['config' => $config]);
+// Corrected: Include .php partial
+echo $view->includePartial('partials/footer.php', ['config' => $config]);
 ?>

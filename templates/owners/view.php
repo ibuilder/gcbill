@@ -1,7 +1,8 @@
 <!-- filepath: c:\Users\iphoe\OneDrive\Documents\Server\construction-billing\production\construction-billing-app\templates\owners\view.html -->
 <?php
 global $config;
-echo $view->includePartial('partials/header.html', [
+// Corrected: Include .php partial
+echo $view->includePartial('partials/header.php', [
     'pageTitle' => $pageTitle ?? 'View Owner',
     'config' => $config,
     'currentUser' => $currentUser ?? null,
@@ -41,5 +42,6 @@ echo $view->includePartial('partials/header.html', [
 <p><em>(List of projects linked to this owner will appear here)</em></p>
 
 <?php
-echo $view->includePartial('partials/footer.html', ['config' => $config]);
+// Corrected: Include .php partial
+echo $view->includePartial('partials/footer.php', ['config' => $config]);
 ?>

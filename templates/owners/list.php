@@ -2,6 +2,16 @@
 --- a/templates/owners/list.php
 +++ b/templates/owners/list.php
 
+<?php
+global $config;
+// Corrected: Include .php partial
+echo $view->includePartial('partials/header.php', [
+    'pageTitle' => $pageTitle ?? 'Owners',
+    'config' => $config,
+    'currentUser' => $currentUser ?? null,
+    'activeNav' => $activeNav ?? 'owners' // Example active nav key
+]);
+?>
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2"><?= htmlspecialchars($pageTitle ?? 'Owners') ?></h1>
@@ -55,5 +65,6 @@
 </div>
 
 <?php
-echo $view->includePartial('partials/footer.html', ['config' => $config]);
+// Corrected: Include .php partial
+echo $view->includePartial('partials/footer.php', ['config' => $config]);
 ?>
