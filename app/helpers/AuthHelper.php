@@ -8,7 +8,7 @@ use App\Models\User; // Use the User model
 class AuthHelper {
     private Database $db;
     private User $userModel;
-    private string $sessionKey = 'user_id'; // Key to store user ID in session
+    private string $sessionKey = 'user'; // Key to store user info in session
 
     public function __construct() {
         $this->db = Database::getInstance();
@@ -31,7 +31,7 @@ class AuthHelper {
 
         if ($user && $user['is_active'] && password_verify($password, $user['password_hash'])) {
             // Password matches and user is active
-            $this->setSession($user['id']);
+            $this->setSession($user);
             // Update last login timestamp (optional)
             $this->userModel->update($user['id'], ['last_login_at' => date('Y-m-d H:i:s')]);
             return true;
@@ -44,17 +44,22 @@ class AuthHelper {
      * Log the current user out.
      */
     public function logout(): void {
-        unset($_SESSION[$this->sessionKey]);
+        unset($_SESSION[$this->sessionKey]);        
         // Optionally destroy the entire session
         // session_destroy();
     }
 
     /**
-     * Check if a user is currently logged in.
+     * Check if there is a user currently logged in.
      * @return bool
      */
     public function isLoggedIn(): bool {
-        return isset($_SESSION[$this->sessionKey]);
+        return isset($_SESSION[$this->sessionKey]) && !empty($_SESSION[$this->sessionKey]);
+    }
+
+    public function getCurrentUser(): array
+    {
+        return $_SESSION[$this->sessionKey] ?? [];
     }
 
     /**
@@ -62,20 +67,6 @@ class AuthHelper {
      * @return int|null User ID or null if not logged in
      */
     public function getUserId(): ?int {
-        return $_SESSION[$this->sessionKey] ?? null;
-    }
-
-    /**
-     * Get the full data array for the currently logged-in user.
-     * @return array|null User data or null if not logged in
-     */
-    public function getCurrentUser(): ?array {
-        $userId = $this->getUserId();
-        if ($userId) {
-            // Fetch user data (excluding password hash)
-            return $this->userModel->findById($userId);
-        }
-        return null;
     }
 
     /**
@@ -83,9 +74,9 @@ class AuthHelper {
      * @param int $userId
      */
     private function setSession(int $userId): void {
-        // Regenerate session ID for security upon login
-        session_regenerate_id(true);
-        $_SESSION[$this->sessionKey] = $userId;
+         // Regenerate session ID for security upon login
+         session_regenerate_id(true);
+         $_SESSION[$this->sessionKey] = $userId;
     }
 
     /**

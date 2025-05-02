@@ -3,6 +3,135 @@
 namespace App\Models;
 
 use App\Database;
+use Exception;
+
+class SOV {
+    private Database $db;
+    private array $fillable = ['project_id', 'item_number', 'description', 'scheduled_value'];
+
+    public function __construct(array $config) {
+        $this->db = Database::getInstance();
+    }
+
+    /**
+     * Find an SOV item by its ID.
+     * @throws Exception
+     */
+    public function findById(int $id): ?array {
+        return $this->db->selectOne("SELECT * FROM schedule_of_values WHERE id = ?", [$id]);
+    }
+
+    /**
+     * Find all SOV items for a specific project.
+     * @throws Exception
+     */
+    public function getForProject(int $projectId): array {
+         $query = "SELECT * FROM schedule_of_values
+                  WHERE project_id = ?
+                  ORDER BY item_number ASC";
+        $result = $this->db->select($query, [$projectId]);
+        if ($result === false) throw new Exception("Error getting SOV for project");
+        return $result;
+    }
+
+    /**
+     * Create a new SOV item.
+     * @throws Exception
+     */
+    public function create(array $data): string|false {
+        $filteredData = $this->filterFillable($data);
+        // Basic validation
+        if (empty($filteredData['project_id']) || !isset($filteredData['item_number']) || empty($filteredData['description']) || !isset($filteredData['scheduled_value'])) {
+            throw new Exception("SOV creation failed: Missing required fields.");
+        }
+        if ($this->itemNumberExists($filteredData['project_id'], $filteredData['item_number'])) {
+            throw new Exception("SOV creation failed: Item number already exists for this project.");
+        }
+        $filteredData = $this->prepareData($filteredData);
+        $result = $this->db->insert('schedule_of_values', $filteredData);
+        if ($result === false) throw new Exception("SOV creation failed.");
+        return $result;
+    }
+
+    /**
+     * Update an existing SOV item.
+     * @throws Exception
+     */
+    public function update(int $id, array $data): int {
+        $filteredData = $this->filterFillable($data);
+        if (empty($filteredData)) throw new Exception("SOV update failed: No data provided");
+        // Fetch original project_id if not provided in update data
+        $originalProjectId = $filteredData['project_id'] ?? $this->findById($id)['project_id'] ?? null;
+        if (!$originalProjectId) throw new Exception("SOV update failed: Cannot update without project context");
+
+        // Check for item number uniqueness if it's being changed
+        if (isset($filteredData['item_number'])) {
+             if ($this->itemNumberExists($originalProjectId, $filteredData['item_number'], $id)) {
+                 error_log("SOV update failed: Item number already exists for this project.");
+                 return -1;
+             }
+        }
+
+        $filteredData = $this->prepareData($filteredData);
+        $result = $this->db->update('schedule_of_values', $filteredData, 'id = ?', [$id]);
+        if ($result === -1) throw new Exception("SOV update failed.");
+        return $result;
+    }
+
+    /**
+     * Delete an SOV item.
+     * Prevents deletion if the item has been used in any billing details.
+     * @throws Exception
+     */
+    public function delete(int $id): int {
+        // Check if this SOV item exists in any `billing_details` record
+        $billingCount = $this->db->selectValue("SELECT COUNT(*) FROM billing_details WHERE sov_item_id = ?", [$id]);
+        if ($billingCount === null) throw new Exception("Error getting SOV count in billing details");
+
+        if ($billingCount > 0) {
+            throw new Exception("Cannot delete SOV item ID {$id}: It has been used in {$billingCount} billing(s).");
+        }
+
+        // Proceed with deletion if not used in billings
+        $result = $this->db->delete('schedule_of_values', 'id = ?', [$id]);
+        if ($result === -1) throw new Exception("Error deleting SOV");
+        return $result;
+    }
+
+     /**
+     * Check if an item number already exists for a given project.
+     */
+    public function itemNumberExists(int $projectId, string $itemNumber, ?int $excludeId = null): bool {
+        $query = "SELECT COUNT(*) FROM schedule_of_values WHERE project_id = ? AND item_number = ?";
+        $params = [$projectId, $itemNumber];
+        if ($excludeId !== null) {
+            $query .= " AND id != ?";
+            $params[] = $excludeId;
+        }
+        return $this->db->selectValue($query, $params) > 0;
+    }
+
+    private function filterFillable(array $data): array {
+        return array_intersect_key($data, array_flip($this->fillable));
+    }
+
+    private function prepareData(array $data): array {
+        if (isset($data['scheduled_value']) && $data['scheduled_value'] === '') {
+            $data['scheduled_value'] = 0.00;
+        } elseif (isset($data['scheduled_value'])) {
+            $data['scheduled_value'] = (float) $data['scheduled_value'];
+        }
+        if (isset($data['project_id'])) {
+             $data['project_id'] = (int) $data['project_id'];
+        }
+        return $data;
+    }
+}
+<?php
+
+namespace App\Models;
+
+use App\Database;
 
 class Sov {
     private Database $db;

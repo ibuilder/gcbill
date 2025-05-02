@@ -1,67 +1,50 @@
 <?php
-/**
- * Construction Billing Management System
- * Main application entry point
- */
 
-// Define application root path
+use App\Helpers\AuthHelper;
+
+// Define the root path of the application.
 define('APP_ROOT', __DIR__);
 
-// Load Composer Autoloader
+// Autoload dependencies.
 require_once APP_ROOT . '/vendor/autoload.php';
 
-// Load environment variables (.env file)
+// Load environment variables from .env file.
 $dotenv = Dotenv\Dotenv::createImmutable(APP_ROOT);
 $dotenv->load();
 
-// Load configuration (adjust path if needed)
+// Load the application configuration.
 require_once APP_ROOT . '/config/config.php';
 
-// Load application bootstrap (adjust path if needed)
+// Load the application bootstrap.
 require_once APP_ROOT . '/app/bootstrap.php';
 
-// Load Database class
-require_once APP_ROOT . '/app/Database.php';
+// Load the Router class.
+require_once APP_ROOT . '/app/Router.php';
 
-// --- Authentication Check (Needs AuthHelper implementation) ---
-session_start(); // Ensure session is started
-$authHelper = new App\Helpers\AuthHelper(); // Assuming AuthHelper is namespaced
-$requestUri = $_SERVER['REQUEST_URI'];
-$publicRoutesPatterns = ['/login', '/forgot-password', '/reset-password/.*']; // Use patterns
+// Start the session.
+session_start();
 
-$isPublicRoute = false;
-foreach ($publicRoutesPatterns as $pattern) {
-    if (preg_match('#^' . $pattern . '$#', parse_url($requestUri, PHP_URL_PATH))) {
-        $isPublicRoute = true;
-        break;
-    }
-}
+// Authentication check.
+$authHelper = new AuthHelper();
+$requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-if (!$authHelper->isLoggedIn() && !$isPublicRoute) {
-    // Use Controller's redirect if possible, or basic header    
-     if (class_exists('App\Controller')) {
-         // Cannot instantiate abstract Controller directly, handle differently
-         // Maybe have a static redirect helper or handle here
-         header('Location: /login'); // Adjust path if needed
-     } else {
-         header('Location: /login'); // Adjust path if needed
-     }
+// List of public paths (no authentication required).
+$publicPaths = ['/login', '/forgot-password', '/reset-password'];
+
+if (!in_array($requestPath, $publicPaths) && !$authHelper->isLoggedIn()) {
+    header('Location: /login');
     exit;
 }
 
-// --- Routing ---
+// Routing.
 try {
     $router = new App\Router();
-    // Load routes from config/routes.php
-    $router->loadRoutes(APP_ROOT . '/config/routes.php'); // Adjust path if needed
-
-    // --- SOV Routes (mostly AJAX) ---
-    $router->get('/projects/(\d+)/sov', 'App\Controllers\SOVController@getForProject'); // Get SOV items for a project
-    $router->post('/sov/store', 'App\Controllers\SOVController@store');          // Add new SOV item
-    $router->post('/sov/update/(\d+)', 'App\Controllers\SOVController@update');    // Update SOV item (using POST)
-    $router->post('/sov/delete/(\d+)', 'App\Controllers\SOVController@delete');    // Delete SOV item (using POST)
+    $router->loadRoutes(APP_ROOT . '/config/routes.php');
     
-    // Match the current request
+    // --- Load SOV routes (mostly AJAX) ---
+    $router->loadSOVRoutes();
+
+    // Match the current request to a defined route.
     $route = $router->match($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);
 
     $controllerName = 'App\\Controllers\\' . ucfirst($route['controller']) . 'Controller';
@@ -69,13 +52,13 @@ try {
 
     if (class_exists($controllerName)) {
        
-        // Create Database instance
+        // Create a new Database instance passing the config.
         $db = new App\Database($config['db']);
         
-        // Instantiate controller 
-        $controller = new $controllerName($db);
+        // Instantiate the controller.
+        $controller = new $controllerName($config);
         if (method_exists($controller, $actionName)) {
-            // Call the action with named parameters from the route
+            // Call the action with named parameters.
             call_user_func_array([$controller, $actionName], $route['params']);
         } else {
             throw new Exception("Action {$actionName} not found in controller {$controllerName}", 404);
@@ -83,10 +66,6 @@ try {
     } else {
         throw new Exception("Controller {$controllerName} not found", 404);
     }
-
 } catch (Exception $e) {
-    // Log the error (handled by bootstrap.php exception handler)
-    // The exception handler in bootstrap.php will catch this and display appropriate error
-    // Re-throw to ensure it's caught by the global handler
     throw $e;
 }
