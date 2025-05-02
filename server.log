@@ -16,3 +16,26 @@ Process on port 8081 killed
 The port 8081 is already in use or the server failed to start. Please check the server.log file.
 Fri May  2 01:37:34 AM UTC 2025: Finished run.sh script
 [Fri May  2 01:37:34 2025] PHP 8.2.27 Development Server (http://localhost:8081) started
+Fri May  2 07:58:07 PM UTC 2025: Starting run.sh script
+Checking if port 8081 is in use...
+Port 8081 is not in use
+[Fri May  2 19:58:08 2025] PHP 8.2.27 Development Server (http://localhost:8081) started
+[Fri May  2 19:58:10 2025] 127.0.0.1:49156 Accepted
+[Fri May  2 19:58:10 2025] 127.0.0.1:49156 [200]: GET / - Uncaught Error: Failed opening required '/home/user/gcbill/vendor/composer/../../app/helpers/auth_helper.php' (include_path='.:/nix/store/vbid0lnigw2vlk8a1gpk0i9fib1cz27m-php-8.2.27/lib/php') in /home/user/gcbill/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/user/gcbill/vendor/composer/autoload_real.php(45): {closure}('baeeea0a30338c1...', '/home/user/gcbi...')
+#1 /home/user/gcbill/vendor/autoload.php(22): ComposerAutoloaderInit1007c64b374514410679dda556d8eb5e::getLoader()
+#2 /home/user/gcbill/index.php(9): require_once('/home/user/gcbi...')
+#3 {main}
+  thrown in /home/user/gcbill/vendor/composer/autoload_real.php on line 41
+[Fri May  2 19:58:10 2025] 127.0.0.1:49156 Closing
+Fri May  2 07:59:09 PM UTC 2025: Starting run.sh script
+Checking if port 8081 is in use...
+COMMAND     PID USER FD   TYPE DEVICE SIZE/OFF NODE NAME
+.php-wrap 10660 user 4u  IPv4 210632      0t0  TCP localhost:8081 (LISTEN)
+Port 8081 is in use
+Killing process on port 8081...
+Process on port 8081 killed
+The port 8081 is already in use or the server failed to start. Please check the server.log file.
+Fri May  2 07:59:09 PM UTC 2025: Finished run.sh script
+[Fri May  2 19:59:09 2025] PHP 8.2.27 Development Server (http://localhost:8081) started

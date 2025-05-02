@@ -32,10 +32,12 @@ class ComposerAutoloaderInit1007c64b374514410679dda556d8eb5e
         call_user_func(\Composer\Autoload\ComposerStaticInit1007c64b374514410679dda556d8eb5e::getInitializer($loader));
 
         $loader->register(true);
-
         $filesToLoad = \Composer\Autoload\ComposerStaticInit1007c64b374514410679dda556d8eb5e::$files;
         $requireFile = \Closure::bind(static function ($fileIdentifier, $file) {
             if (empty($GLOBALS['__composer_autoload_files'][$fileIdentifier])) {
+                if ($file === '/home/user/gcbill/vendor/composer/../../app/helpers/auth_helper.php') {
+                  $file = '/home/user/gcbill/vendor/composer/../../app/helpers/AuthHelper.php';
+                }
                 $GLOBALS['__composer_autoload_files'][$fileIdentifier] = true;
 
                 require $file;
