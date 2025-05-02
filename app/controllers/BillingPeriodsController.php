@@ -1,5 +1,5 @@
 <?php
-namespace AppControllers;
+namespace App\Controllers;
 
 use App\Libraries\Auth;
 use App\Models\BillingPeriod;

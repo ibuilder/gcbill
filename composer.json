@@ -21,11 +21,13 @@
         "files": [
             "app/helpers/Helper.php",
             "app/helpers/AuthHelper.php",
-            "app/helpers/auth_helper.php",
-            "app/helpers/validation_helper.php",
-            "app/helpers/pdf_helper.php",
-            "app/helpers/excel_helper.php",
-            "app/helpers/security_helper.php"
+            "app/helpers/CalculationHelper.php",
+            "app/helpers/SecurityHelper.php",
+            "app/helpers/ValidationHelper.php",
+            "app/helpers/SecurityHelper.php",
+            "app/helpers/ViewHelper.php",
+            "app/helpers/ExcelHelper.php",
+            "app/helpers/PDFHelper.php"
         ]
     },
     "config": {

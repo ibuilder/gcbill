@@ -3,7 +3,7 @@
         'name' => 'your-vendor/construction-billing-app',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'a65ef21f1b76bc02d7361d31081966c14c146530',
+        'reference' => 'd952d33bdb8242265e845b96dea4f87988deef02',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -76,7 +76,7 @@
         'your-vendor/construction-billing-app' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'a65ef21f1b76bc02d7361d31081966c14c146530',
+            'reference' => 'd952d33bdb8242265e845b96dea4f87988deef02',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

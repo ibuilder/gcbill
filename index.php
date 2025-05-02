@@ -44,6 +44,21 @@ try {
     // --- Load SOV routes (mostly AJAX) ---
     $router->loadSOVRoutes();
 
+    // --- AIA Document Routes ---
+
+    // Route to the selection page
+    // Maps GET /aia to AIADocumentController->index()
+    $router->addRoute('GET', '/aia', ['App\Controllers\AIADocumentController', 'index']);
+
+    // Route to generate the PDF for a specific application ID
+    // Maps GET /aia/generate/{id} to AIADocumentController->generatePdf(id)
+    // The {id:\d+} part ensures the ID is numeric
+    $router->addRoute('GET', '/aia/generate/{id:\d+}', ['App\Controllers\AIADocumentController', 'generatePdf']);
+
+    // Route to preview the HTML for a specific application ID
+    // Maps GET /aia/preview/{id} to AIADocumentController->previewHtml(id)
+    $router->addRoute('GET', '/aia/preview/{id:\d+}', ['App\Controllers\AIADocumentController', 'previewHtml']);
+
     // Match the current request to a defined route.
     $route = $router->match($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);
 
@@ -69,3 +84,42 @@ try {
 } catch (Exception $e) {
     throw $e;
 }
+
+$httpMethod = $_SERVER['REQUEST_METHOD'];
+$uri = $_SERVER['REQUEST_URI'];
+
+// Strip query string (?foo=bar) and decode URI
+if (false !== $pos = strpos($uri, '?')) {
+    $uri = substr($uri, 0, $pos);
+}
+$uri = rawurldecode($uri);
+
+$routeInfo = $router->dispatch($httpMethod, $uri); // Assuming $router->dispatch exists
+
+switch ($routeInfo[0]) {
+    case Dispatcher::NOT_FOUND: // Assuming Dispatcher constants exist
+        // Handle 404 Not Found
+        http_response_code(404);
+        ViewHelper::render('errors/404'); // Render a 404 view
+        break;
+    case Dispatcher::METHOD_NOT_ALLOWED:
+        $allowedMethods = $routeInfo[1];
+        // Handle 405 Method Not Allowed
+        http_response_code(405);
+        echo "Method Not Allowed"; // Or render a 405 view
+        break;
+    case Dispatcher::FOUND:
+        $handler = $routeInfo[1];
+        $vars = $routeInfo[2]; // Captured route parameters (like {id})
+
+        $controllerName = $handler[0];
+        $methodName = $handler[1];
+
+        // Instantiate controller and call method, passing parameters
+        $controller = new $controllerName();
+        // Call the method, unpacking the parameters from the route
+        call_user_func_array([$controller, $methodName], $vars);
+        break;
+}
+
+?>

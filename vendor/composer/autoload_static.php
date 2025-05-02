@@ -12,11 +12,12 @@ class ComposerStaticInit1007c64b374514410679dda556d8eb5e
         'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         'e55ea5b654b4d0b00f6e8db9f129247d' => __DIR__ . '/../..' . '/app/helpers/Helper.php',
         'feb235f250fd269e9b1fc2b97ec37bcd' => __DIR__ . '/../..' . '/app/helpers/AuthHelper.php',
-        'baeeea0a30338c107b19523469128da0' => __DIR__ . '/../..' . '/app/helpers/auth_helper.php',
-        '83c991c112a42dd456f6a43fed0953c3' => __DIR__ . '/../..' . '/app/helpers/validation_helper.php',
-        '54456c57c81bce8ea177f668138639bc' => __DIR__ . '/../..' . '/app/helpers/pdf_helper.php',
-        '8299810271dc9cd99df6651304a042ae' => __DIR__ . '/../..' . '/app/helpers/excel_helper.php',
-        'bde746c931d3ef7031417d43fb97bad9' => __DIR__ . '/../..' . '/app/helpers/security_helper.php',
+        '0f45f07996f7ca20e7de7b6118f3a8bb' => __DIR__ . '/../..' . '/app/helpers/CalculationHelper.php',
+        '2fffdc859721ceb4f8d48a1430fdd39d' => __DIR__ . '/../..' . '/app/helpers/SecurityHelper.php',
+        '32c88f57c142e12c7a8acf474f2da9a5' => __DIR__ . '/../..' . '/app/helpers/ValidationHelper.php',
+        '711b2f1ad112e9d954690653b4e5d578' => __DIR__ . '/../..' . '/app/helpers/ViewHelper.php',
+        '8b0c7d59668b7c437182f0bbc12d96fc' => __DIR__ . '/../..' . '/app/helpers/ExcelHelper.php',
+        'e7af28395c063a965ffebda40a22a8c7' => __DIR__ . '/../..' . '/app/helpers/PDFHelper.php',
     );
 
     public static $prefixLengthsPsr4 = array (
