@@ -2,11 +2,11 @@
 
 namespace AppControllers;
 
-use AppLibrariesSecurityHelper;
-use AppModelsOwner;
-use AppDatabase;
+use App\Helpers\SecurityHelper;
+use App\Models\Owner;
+use App\Database;
 
-class OwnerController extends BaseController
+class OwnerController extends \App\Controllers\BaseController
 {
 
     private $ownerModel;

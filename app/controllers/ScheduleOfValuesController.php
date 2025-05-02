@@ -2,10 +2,10 @@
 
 namespace AppControllers;
 
-use AppDatabase;
-use AppLibrariesAuth;
-use AppModelsScheduleOfValues;
-use AppModelsProject;
+use App\Database;
+use App\Libraries\Auth;
+use App\Models\SOV;
+use App\Models\Project;use App\Controllers\BaseController;
 
 class ScheduleOfValuesController extends BaseController
 {
@@ -42,14 +42,14 @@ class ScheduleOfValuesController extends BaseController
             header('Location: /404');
             exit;
         }
-        $scheduleOfValues = ScheduleOfValues::where('project_id', $projectId, $this->db)->get();
+        $scheduleOfValues = SOV::where('project_id', $projectId, $this->db)->get();
         return $this->view('schedule-of-values/index.html', ['schedule_of_values' => $scheduleOfValues, 'project' => $project]);
     }
 
     public function view($id)
     {
         $this->before();
-        $scheduleOfValue = ScheduleOfValues::find($id);
+        $scheduleOfValue = SOV::find($id, $this->db);
         if (!$scheduleOfValue, $this->db) {
             header('Location: /404');
             exit;
@@ -60,7 +60,7 @@ class ScheduleOfValuesController extends BaseController
     public function create($data)
     {
         $this->before();
-        $scheduleOfValue = new ScheduleOfValues($this->db,$data);
+        $scheduleOfValue = new SOV($this->db,$data);
         $scheduleOfValue->save();
         return $scheduleOfValue->id;
     }
@@ -68,7 +68,7 @@ class ScheduleOfValuesController extends BaseController
     public function edit($id, $data)
     {
         $this->before();
-        $scheduleOfValue = ScheduleOfValues::find($id, $this->db);
+        $scheduleOfValue = SOV::find($id, $this->db);
         if (!$scheduleOfValue) {
             header('Location: /404');
             exit;
@@ -81,7 +81,7 @@ class ScheduleOfValuesController extends BaseController
     public function delete($id)
     {
         $this->before();
-        $scheduleOfValue = ScheduleOfValues::find($id, $this->db);
+        $scheduleOfValue = SOV::find($id, $this->db);
         if (!$scheduleOfValue) {
             header('Location: /404');
             exit;

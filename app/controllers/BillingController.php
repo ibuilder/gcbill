@@ -1,33 +1,33 @@
 <?php
 
-namespace AppControllers;
+namespace App\Controllers; // This is now correct
 
 use TCPDF;
 
-use AppDatabase;
-use AppLibrariesAuth;
-use AppModelsBilling;
-use AppModelsBillingDetail;
+use App\Database;
+use App\Libraries\Auth;
+use App\Models\Billing;
+use App\Models\BillingDetail;
 use App\Models\Project;
-use App\Models\Sov;
+use App\Models\SOV;
 use App\Helpers\SecurityHelper;
 use App\Helpers\CalculationHelper; // We'll create this helper later
 use App\Helpers\ViewHelper;
 
 
-class BillingController extends BaseController {
+class BillingController extends BaseController { // Changed to BillingController
     private Billing $billingModel;   
     private BillingDetail $billingDetailModel;    
     private Project $projectModel;
-    private Sov $sovModel;
+    private SOV $sovModel;
 
     
     public function __construct(Database $db) {
         parent::__construct($db);
         
 
-        $this->billingModel = new Billing($this->db);    
-        $this->billingDetailModel = new BillingDetail($this->db);
+        $this->billingModel = new Billing();    
+        $this->billingDetailModel = new BillingDetail();
 
         $this->projectModel = new Project($this->db);
         $this->sovModel = new Sov($this->db);
@@ -207,7 +207,7 @@ class BillingController extends BaseController {
         $projectId = $billing['project_id'];
         $billingNumber = $billing['billing_number'];
         $project = $this->projectModel->findById($projectId); // Fetch project data
-        if (!$project) {
+       if (!$project) {
              $this->jsonResponse(['success' => false, 'message' => 'Associated project not found.'], 404); return;
         }
 

@@ -1,12 +1,12 @@
 <?php
 
-namespace AppControllers;
+namespace App\Controllers;
 
-use AppLibrariesAuth;
-use AppDatabase;
-use AppModelsNotification;
+use App\Libraries\Auth;
+use App\Database;
+use App\Models\Notification;
 
-class NotificationController extends BaseController
+class NotificationController extends \App\Controllers\BaseController
 {
     public function __construct(Database $db)
     {
@@ -15,30 +15,25 @@ class NotificationController extends BaseController
 
     public function index()
     {
-        $user = $_SESSION['user'];        
+        $user = $_SESSION['user'];
         $notificationModel = new Notification($this->db);
-        $notifications = $notificationModel->where('user_id', $user->id)
-        ->orderBy('created_at', 'desc')
-        ->all();
-
+        $notifications = $notificationModel->select("SELECT * FROM `notifications` WHERE user_id = ? ORDER BY created_at DESC", [$user->id]);
         return $this->view('notifications/index', ['notifications' => $notifications]);
     }
 
-        $this->view('notifications/index.html', ['notifications' => $notifications]);
-    }
 
     public function view($id)
     {
-      $user = $_SESSION['user'];
-      $notificationModel = new Notification($this->db);
-      $notification = $notificationModel->find($id);
+     $user = $_SESSION['user'];
+     $notificationModel = new Notification($this->db);
+     $notification = $notificationModel->selectOne("SELECT * FROM `notifications` WHERE id = ? ",[$id]);
 
-      if (!$notification || $notification->user_id != $user->id) {
-          header('Location: /404');
-          exit;
-      }
-      $notificationModel->update($id,['is_read' => true]);
-      return $this->view('notifications/view', ['notification' => $notification]);
-        
+     if (!$notification || $notification['user_id'] != $user->id) {
+            header('Location: /404');
+            exit;
+        }
+        $notificationModel->update("notifications", ['is_read' => true],"id = ?",[$id]);
+        return $this->view('notifications/view', ['notification' => $notification]);
+
     }
 }

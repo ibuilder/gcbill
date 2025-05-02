@@ -1,14 +1,14 @@
 <?php
 
-namespace AppControllers;
+namespace App\Controllers; // This was correct and must be App\Controllers
 
-use AppLibrariesAuth;
-use AppHelpersSecurityHelper;
-use AppModelsUser;
-use AppDatabase;
+use App\Libraries\Auth;
+use App\Helpers\SecurityHelper;
+use App\Models\User;
+use App\Database;
 
 class UserController extends BaseController {
-
+    
     private $userModel;
     private const USERS_CONTROLLER = 'UserController';
 
@@ -19,7 +19,7 @@ class UserController extends BaseController {
     }
 
         // Get the current user from the session
-        $user = $_SESSION['user'];
+        // $user = $_SESSION['user']; // this var is not used
 
         // Check if the user has permission to access the current controller and action
         if (!Auth::checkPermission($user, $this->controller, $this->action)) {
@@ -28,13 +28,14 @@ class UserController extends BaseController {
             exit;
         }
         $this->view->output('auth/login.html');
-    }
+   
 
     /**
      * Process the login form submission.
      */
     public function processLogin(): void {
-         // If already logged in, redirect
+        // If already logged in, redirect
+        
         if ($this->auth->isLoggedIn()) {
             $this->redirect('/dashboard');
         }
@@ -65,7 +66,7 @@ class UserController extends BaseController {
              unset($_SESSION['flash_error']); // Clear any previous error
             $this->redirect('/dashboard'); // Redirect to dashboard or intended page
         } else {
-            // Login failed
+            // Login failed         
             $_SESSION['flash_error'] = 'Invalid credentials or inactive account.';
             $this->redirect('/login');
         }
@@ -86,7 +87,7 @@ class UserController extends BaseController {
     /**
      * List users (Admin only).
      */
-    public function index(): void {
+    public function index(): void {       
         // Permission Check
         $this->before();
         if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
@@ -96,7 +97,7 @@ class UserController extends BaseController {
         }
 
         // Fetch users (implement pagination later)
-        $users = $this->db->select("SELECT id, username, email, first_name, last_name, role, is_active FROM users ORDER BY last_name, first_name");
+        $users = $this->db->select("SELECT id, username, email, first_name, last_name, role, is_active FROM users ORDER BY last_name, first_name"); // TODO: add a model or add the method to the model
 
         $this->view->output('settings/users/list.html', ['users' => $users]); // Adjust template path
     }
@@ -105,7 +106,7 @@ class UserController extends BaseController {
      * Show form to create a new user (Admin only).
      */
     public function create(): void {
-        // Permission Check
+         // Permission Check
         $this->before();
          if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
             $_SESSION['flash_error'] = 'Access Denied.';
@@ -119,7 +120,7 @@ class UserController extends BaseController {
      * Store a new user (Admin only).
      */
     public function store(): void {
-        $this->before();
+         $this->before();
         // Permission Check
         if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
             $_SESSION['flash_error'] = 'Access Denied.';
@@ -169,7 +170,7 @@ class UserController extends BaseController {
      * @param int $id The ID of the user to view.
      */
     public function view(int $id): void {
-         $this->before();
+         $this->before();        
          if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
              $_SESSION['flash_error'] = 'Access Denied.';
              $this->redirect('/dashboard');
@@ -191,7 +192,7 @@ class UserController extends BaseController {
      * @param int $id The ID of the user to edit.
      */
     public function edit(int $id): void {
-         $this->before();
+         $this->before();        
          if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
              $_SESSION['flash_error'] = 'Access Denied.';
              $this->redirect('/dashboard');
@@ -213,7 +214,7 @@ class UserController extends BaseController {
      * @param array $data The updated user data.
      */
     public function update(int $id, array $data): void {
-         $this->before();
+         $this->before();        
          if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
              $_SESSION['flash_error'] = 'Access Denied.';
              $this->redirect('/dashboard');
@@ -251,7 +252,7 @@ class UserController extends BaseController {
      * @param int $id The ID of the user to delete.
      */
     public function delete(int $id): void {
-        $this->before();
+         $this->before();
          if (!$this->auth->checkPermission($this->auth->getUser($_SESSION['user_id']),self::USERS_CONTROLLER, __FUNCTION__)) {
              $_SESSION['flash_error'] = 'Access Denied.';
              $this->redirect('/dashboard');
@@ -264,12 +265,11 @@ class UserController extends BaseController {
     }
 
     // Add edit, update, delete methods similarly with permission checks
-
+    }
     // --- Password Reset Methods ---
     public function forgotPassword(): void { /* Show form */ }
     public function processForgotPassword(): void { /* Handle submission, generate token, send email */ }
     public function resetPassword(string $token): void { /* Show reset form if token is valid */ }
     public function processResetPassword(string $token): void { /* Handle reset submission */ }
 
-     // TODO: Add CSRF checks to all other POST/UPDATE/DELETE methods (update, delete, processForgotPassword, processResetPassword etc.)
-}
+    // TODO: Add CSRF checks to all other POST/UPDATE/DELETE methods (update, delete, processForgotPassword, processResetPassword etc.)

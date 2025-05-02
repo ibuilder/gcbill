@@ -1,6 +1,6 @@
 <?php
 
-namespace AppModels;
+namespace App\Models;
 
 use App\Database;
 
@@ -21,7 +21,7 @@ class BillingPeriod {
      * @param int $id
      * @return array|null Billing period data or null if not found
      */
-    public function find(int $id): ?array {
+    public function find(int $id): ?array {    
         try{
             $query = "SELECT * FROM billing_periods WHERE id = ?";
             return $this->db->selectOne($query, [$id]);
@@ -68,7 +68,7 @@ class BillingPeriod {
      * @param array $data Data to update
      * @return int Number of affected rows or -1 on error
      */
-    public function update(int $id, array $data): int{
+    public function update(int $id, array $data): int {
         try{
             $filteredData = $this->filterFillable($data);
             $preparedData = $this->prepareData($filteredData);

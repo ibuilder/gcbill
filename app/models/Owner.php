@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Models;
+namespace App\Models; // Correct namespace
 
 use App\Database;
 
-class Owner {
+class Owner { // Correct class name
     private Database $db;
     private array $fillable = [
         'owner_name', 'primary_contact_name', 'primary_contact_email',
@@ -33,7 +33,7 @@ class Owner {
             return null;
         }
     }
-    
+
     /**
      * Get all owners (add pagination later). 
      * @param string $orderBy The column to order by.
@@ -51,7 +51,7 @@ class Owner {
             return [];
         }
     }
-    
+
     /**
      * Get all owners for simple dropdown list (ID and Name).
      * @return array The list of owners (ID and Name).
@@ -73,7 +73,7 @@ class Owner {
             }
             $preparedData = $this->prepareData($filteredData);
             return $this->db->insert('owners', $preparedData);
-        }catch(Exception $e){
+        } catch(\Exception $e){
             error_log('Error in Owner::insert: ' . $e->getMessage());
             return false;
         }
@@ -98,7 +98,7 @@ class Owner {
             }
             $preparedData = $this->prepareData($filteredData);
             return $this->db->update('owners', $preparedData, 'id = ?', [$id]);
-        }catch(Exception $e){
+        } catch(\Exception $e){
             error_log('Error in Owner::update: ' . $e->getMessage());
             return -1;
         }
@@ -110,10 +110,10 @@ class Owner {
      * @return int The number of affected rows or -1 on error.
      * Note: The foreign key constraint on projects (ON DELETE SET NULL) will handle linked projects.
      */
-    public function remove(int $id): int {    
-        try{
+    public function remove(int $id): int {
+        try {
             return $this->db->delete('owners', 'id = ?', [$id]);
-        }catch(Exception $e){
+        } catch(\Exception $e){
             error_log('Error in Owner::remove: ' . $e->getMessage());
             return -1;
         }

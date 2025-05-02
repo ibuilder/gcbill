@@ -47,7 +47,7 @@ class ChangeOrderController extends BaseController
         $this->before('index');
 
         try{
-            
+
             // 1. Get the project id from the parameters.
             $projectId = $project_id;
 
@@ -73,7 +73,7 @@ class ChangeOrderController extends BaseController
             return json_encode(['error' => 'An error occurred while processing your request.']);
         }
     }
-    
+
 
     /**
      * View action: Get a specific change order and its items.
@@ -109,7 +109,7 @@ class ChangeOrderController extends BaseController
         return json_encode(['change_order' => $changeOrder->toArray(), 'change_order_items' => $changeOrderItems]);
     }
 
-    
+
 
      /**
      * Create action: Create a new change order.
@@ -119,7 +119,7 @@ class ChangeOrderController extends BaseController
     public function create(array $data): string
     {
         $this->before('create');        
-
+       
        try {
             // 1. Receive the data in an array as a parameter.
             $changeOrderData = $data;
@@ -190,7 +190,7 @@ class ChangeOrderController extends BaseController
     public function delete(int $id): string
     {
         $this->before('delete');
-        
+
         try {
             // 1. Receive the change order id as a parameter.
             $changeOrderId = $id;

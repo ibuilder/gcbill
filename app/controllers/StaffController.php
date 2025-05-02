@@ -1,18 +1,18 @@
 <?php
-// filepath: c:\Users\iphoe\OneDrive\Documents\Server\construction-billing\production\construction-billing-app\app\Controllers\StaffController.php
+
 <?php
 
 namespace App\Controllers;
 
-use App\Controller;
+
 use App\Database;
 use App\Models\Staff;
 use App\Models\StaffPosition;
 use App\Models\User; // Need User model for linking
 use App\Helpers\SecurityHelper;
-use App\Libraries\Auth;
+use App\Libraries\Auth; // Assuming Auth is a namespaced class
 
-class StaffController extends BaseController {
+class StaffController extends \App\Controllers\BaseController { // Assuming BaseController is namespaced correctly
 
     private Staff $staffModel;
     private StaffPosition $positionModel;
@@ -22,11 +22,11 @@ class StaffController extends BaseController {
     {
         parent::__construct($db);
         $this->staffModel = new Staff($this->db); 
-        $this->positionModel = new StaffPosition($this->db); 
+        $this->positionModel = new StaffPosition($this->db);
         $this->userModel = new User($this->db); // For user linking dropdown
     }
     
-
+    
      protected function before()
     {
         // Check if the user is logged in

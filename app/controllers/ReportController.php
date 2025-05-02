@@ -1,38 +1,32 @@
 <?php
 
-namespace AppControllers;
-
-use AppDatabase;
-use AppModelsProject;
-use AppModelsBillingPeriod;
-use AppModelsSovBillingItem;
-use AppModelsGeneralCondition;
-use AppModelsChangeOrder;
-use AppModelsStaff;
-use AppModelsStaffTimeEntry;
-
-class ReportController extends BaseController
+namespace App\Controllers;
+use App\Controllers\BaseController;
+use App\View; 
+use App\Database;
+use App\Models\Project; 
+use App\Models\BillingPeriod; 
+use App\Models\SOV as SovBillingItem; 
+use App\Models\GeneralCondition; 
+use App\Models\ChangeOrder; 
+use App\Models\Staff; 
+use App\Models\StaffTimeEntry; 
+class ReportController extends BaseController 
 {
+
+    private $db;
+    private $view;
+
     public function __construct(Database $db)
     {
-        parent::__construct($db);
-    }
-
-    protected function before() {
-        // Get the current user from the session
-        $user = $_SESSION['user'];
-
-        // Check if the user has permission to access the current controller and action
-        if (!Auth::checkPermission($user, $this->controller, $this->action)) {
-            // Redirect to a 403 error page if no permission
-            header('Location: /403');
-            exit;
-        }
+        $this->db = $db;
+        $this->view = new View();
     }
 
     public function projectCostSummary($projectId)
     {
         $this->before();
+
 
         // Load the models
         $projectModel = new Project($this->db);
@@ -45,7 +39,7 @@ class ReportController extends BaseController
         $project = $projectModel->find($projectId);
         if (!$project) {
             // Handle project not found (e.g., redirect to an error page)
-            header('Location: /404');
+            //header('Location: /404');
             exit;
         }
 
@@ -57,11 +51,11 @@ class ReportController extends BaseController
         $totalRetainage = 0;
         foreach ($billingPeriods as $period) {
             $billedItems = $sovBillingItemModel->where('billing_period_id', $period['id'])->get();
-            foreach($billedItems as $item){
+            foreach ($billedItems as $item) {
                 $totalBilled += ($item['work_completed_this_period'] + $item['materials_stored_this_period']);
-        }
-            // Calculate retainage for the period (example calculation)
-            $totalRetainage += $totalBilled * ($project['retainage_percentage'] / 100); 
+            }
+
+            $totalRetainage += $totalBilled * ($project['retainage_percentage'] / 100);
         }
 
         // Get general conditions for the project
@@ -69,16 +63,17 @@ class ReportController extends BaseController
         $totalGeneralConditionsCost = array_sum(array_column($generalConditions, 'actual_cost_to_date'));
 
         // Get change orders for the project
-        $changeOrders = $changeOrderModel->where('project_id', $projectId)->get();
-        $totalChangeOrdersAmount = 0;
-        foreach($changeOrders as $order){
+        $changeOrders = $changeOrderModel->where('project_id', $projectId)->get(); 
+        $totalChangeOrdersAmount= 0;
+        foreach ($changeOrders as $order) {
             $totalChangeOrdersAmount += $order['amount'];
         }
 
         $data = compact('project', 'totalBilled', 'totalRetainage', 'totalGeneralConditionsCost', 'totalChangeOrdersAmount');
 
         // Pass the data to the view
-        $this->view('reports/projectCostSummary', $data);
+        $this->view->render('reports/projectCostSummary.html', $data);
+
     }
 
     public function billingsPerProject($projectId)
@@ -94,7 +89,7 @@ class ReportController extends BaseController
         $project = $projectModel->find($projectId);
         if (!$project) {
             // Handle project not found (e.g., redirect to an error page)
-            header('Location: /404');
+            //header('Location: /404');
             exit;
         }
 
@@ -106,7 +101,7 @@ class ReportController extends BaseController
         foreach ($billingPeriods as $period) {
             $billedItems = $sovBillingItemModel->where('billing_period_id', $period['id'])->get();
             $totalBilled = 0;
-            foreach($billedItems as $item){
+            foreach ($billedItems as $item) {
                 $totalBilled += ($item['work_completed_this_period'] + $item['materials_stored_this_period']);
             }
             $billingsData[] = [
@@ -117,7 +112,7 @@ class ReportController extends BaseController
 
         $data = compact('project', 'billingsData');
         // Pass the data to the view
-        $this->view('reports/billingsPerProject', $data);
+        $this->view->render('reports/billingsPerProject.html', $data);
     }
 
     public function retainageReport($projectId)
@@ -131,7 +126,7 @@ class ReportController extends BaseController
         $project = $projectModel->find($projectId);
         if (!$project) {
             // Handle project not found (e.g., redirect to an error page)
-            header('Location: /404');
+            //header('Location: /404');
             exit;
         }
 
@@ -142,7 +137,7 @@ class ReportController extends BaseController
         $totalRetainage = 0;
         foreach ($billingPeriods as $period) {
             $billedItems = (new SovBillingItem())->where('billing_period_id', $period['id'])->get();
-            foreach($billedItems as $item){
+            foreach ($billedItems as $item) {
                 $totalBilled += ($item['work_completed_this_period'] + $item['materials_stored_this_period']);
             }
         }
@@ -151,7 +146,7 @@ class ReportController extends BaseController
 
         $data = compact('project', 'totalBilled', 'totalRetainage');
         // Pass the data to the view
-        $this->view('reports/retainageReport', $data);
+        $this->view->render('reports/retainageReport.html', $data);
     }
 
     public function staffTimeTracking($projectId, $startDate, $endDate)
@@ -161,35 +156,37 @@ class ReportController extends BaseController
         // Load the models
         $projectModel = new Project($this->db);
         $staffModel = new Staff($this->db);
-         $staffTimeEntryModel = new StaffTimeEntry();
- 
-         // Get the project data
-         $project = $projectModel->find($projectId);
-         if (!$project) {
-             // Handle project not found (e.g., redirect to an error page)
-             header('Location: /404');
-             exit;
-         }
- 
-         // Get the staff members
-         $staffMembers = $staffModel->all();
- 
-         // Get staff time entries for the project and date range
-         $timeEntries = $staffTimeEntryModel
-             ->where('project_id', $projectId)
-             ->where('entry_date', '>=', $startDate)
-             ->where('entry_date', '<=', $endDate)
-             ->get();
+        $staffTimeEntryModel = new StaffTimeEntry();
+
+        // Get the project data
+        $project = $projectModel->find($projectId);
+        if (!$project) {
+            // Handle project not found (e.g., redirect to an error page)
+            // header('Location: /404');
+            exit;
+        }
+
+        // Get the staff members
+        $staffMembers = $staffModel->all();
+        
+        // Get staff time entries for the project and date range        
+        $timeEntries = $staffTimeEntryModel
+        ->where('project_id', $projectId)
+        ->where('entry_date', '>=', $startDate)
+        ->where('entry_date', '<=', $endDate)
+        ->get();
 
         $staffData = [];
-        foreach($staffMembers as $staff){
+        foreach ($staffMembers as $staff) {
             $staffData[] = [
                 'staff' => $staff,
-                'time_entries' => array_filter($timeEntries, fn($entry) => $entry['staff_id'] === $staff['id'])
+                'time_entries' => array_filter($timeEntries, fn ($entry) => $entry['staff_id'] === $staff['id'])
             ];
         }
-         $data = compact('project', 'staffData', 'startDate', 'endDate');
+        $data = compact('project', 'staffData', 'startDate', 'endDate');
         // Pass the data to the view
-        $this->view('reports/staffTimeTracking', $data);
-    }
+        $this->view->render('reports/staffTimeTracking.html', $data);
+
+    }    
+
 }

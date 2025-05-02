@@ -1,12 +1,12 @@
 <?php
 
-namespace AppControllers;
+namespace App\Controllers; // Changed namespace
 
-use AppLibrariesAuth;
-use AppDatabase;
-use AppModelsOwner;
+use App\Libraries\Auth;
+use App\Database;
+use App\Models\Owner;
 
-class OwnersController extends BaseController
+class OwnerController extends BaseController // Changed class name
 {
     protected $controller = 'Owners';
     protected $db;
@@ -47,7 +47,7 @@ class OwnersController extends BaseController
             exit;
         }
     }
-
+    
     /**
      * Index action: Show all owners.
      * @return string
@@ -56,8 +56,8 @@ class OwnersController extends BaseController
     {
         $this->before('index');
         try {
-            $owner = new Owner($this->db);
-            $owners = $owner->all();
+            $owner = new Owner($this->db, []);
+            $owners = $owner->getAll();
             return json_encode($owners);
         } catch (Exception $e) {
             error_log('Error in OwnersController::index: ' . $e->getMessage());
@@ -74,7 +74,7 @@ class OwnersController extends BaseController
     {
         $this->before('view');
         try {
-            $owner = new Owner($this->db);
+            $owner = new Owner($this->db, []);
             $result = $owner->find($id);
             if (!$result) {
                 return json_encode(['error' => 'Owner not found.']);
@@ -95,7 +95,7 @@ class OwnersController extends BaseController
     {
         $this->before('create');
         try {
-            $owner = new Owner($this->db);
+            $owner = new Owner($this->db, []);
             $result = $owner->insert($data);
             if (!$result) {
                 return json_encode(['error' => 'Error creating owner.']);
@@ -117,7 +117,7 @@ class OwnersController extends BaseController
     {
         $this->before('edit');
         try {
-            $owner = new Owner($this->db);
+            $owner = new Owner($this->db, []);
             $result = $owner->update($id, $data);
             if ($result === -1) {
                 return json_encode(['error' => 'Error updating owner.']);
@@ -138,7 +138,7 @@ class OwnersController extends BaseController
     {
         $this->before('delete');
         try {
-            $owner = new Owner($this->db);
+            $owner = new Owner($this->db, []);
             $result = $owner->remove($id);
             if ($result === -1) {
                 return json_encode(['error' => 'Error deleting owner.']);

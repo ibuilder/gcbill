@@ -2,9 +2,10 @@
 
 namespace AppControllers;
 
-use AppDatabase;
+use App\Database;
+use App\Controllers\BaseController;
 
-class GeneralConditionsController extends BaseController
+class GeneralConditionsController extends \App\Controllers\BaseController
 {
     public function __construct(Database $db)
     {

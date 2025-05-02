@@ -1,6 +1,5 @@
 <?php
-// filepath: c:\Users\iphoe\OneDrive\Documents\Server\construction-billing\production\construction-billing-app\app\Models\Staff.php
-<?php
+
 
 namespace App\Models;
 

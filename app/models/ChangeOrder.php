@@ -26,7 +26,7 @@ class ChangeOrder
      * @param string $property The property name.
      * @return mixed The property value or null if not found.
      */
-    
+
     public function __get($property)
     {   
         if (property_exists($this, $property)) {
@@ -54,11 +54,12 @@ class ChangeOrder
      * @param int $id
      * @return array|null Change order data or null if not found
      */
-    public function find(int $id): ?array {
-        try{
+    public function find(int $id): ?array
+    {
+        try {
             $query = "SELECT * FROM change_orders WHERE id = ?";
             return $this->db->selectOne($query, [$id]);
-        }catch(Exception $e){
+        } catch (Exception $e) {
             error_log('Error in ChangeOrder::find: ' . $e->getMessage());
             return null;
         }
@@ -69,11 +70,12 @@ class ChangeOrder
      * @param int $projectId The project ID.
      * @return array List of change orders
      */
-    public function all(int $projectId): array {
-        try{
+    public function all(int $projectId): array
+    {
+        try {
             $query = "SELECT * FROM change_orders WHERE project_id = ?";
             return $this->db->select($query, [$projectId]);
-        }catch(Exception $e){
+        } catch (Exception $e) {
             error_log('Error in ChangeOrder::all: ' . $e->getMessage());
             return [];
 
@@ -85,12 +87,13 @@ class ChangeOrder
      * @param array $data Change order data
      * @return string|false Last insert ID or false on failure
      */
-    public function insert(array $data): string|false {
-        try{
+    public function insert(array $data): string|false
+    {
+        try {
             $filteredData = $this->filterFillable($data);
             $preparedData = $this->prepareData($filteredData);
             return $this->db->insert('change_orders', $preparedData);
-        }catch(Exception $e){
+        } catch (Exception $e) {
             error_log('Error in ChangeOrder::insert: ' . $e->getMessage());
             return false;
         }
@@ -103,12 +106,13 @@ class ChangeOrder
      * @param array $data Data to update
      * @return int Number of affected rows or -1 on error
      */
-    public function update(int $id, array $data): int {
-        try{
+    public function update(int $id, array $data): int
+    {
+        try {
             $filteredData = $this->filterFillable($data);
             $preparedData = $this->prepareData($filteredData);
             return $this->db->update('change_orders', $preparedData, 'id = ?', [$id]);
-        }catch(Exception $e){
+        } catch (Exception $e) {
             error_log('Error in ChangeOrder::update: ' . $e->getMessage());
             return -1;
         }
@@ -120,10 +124,11 @@ class ChangeOrder
      * @param int $id Change order ID
      * @return int Number of affected rows or -1 on error
      */
-    public function remove(int $id): int {
-        try{
+    public function remove(int $id): int
+    {
+        try {
             return $this->db->delete('change_orders', 'id = ?', [$id]);
-        }catch(Exception $e){
+        } catch (Exception $e) {
             error_log('Error in ChangeOrder::remove: ' . $e->getMessage());
             return -1;
         }
@@ -134,10 +139,14 @@ class ChangeOrder
      * @param array $data The data to filter.
      * @return array The filtered data.
      */
-    private function filterFillable(array $data): array {
+    private function filterFillable(array $data): array
+    {
+        return array_intersect_key($data, array_flip($this->fillable));
+    }
      * Prepare data for DB insertion/update (handle nulls, types).
      */
-    private function prepareData(array $data): array {
+    private function prepareData(array $data): array
+    {
         // Convert empty strings for numeric/date fields to null
         $nullableDate = ['change_order_date'];
 
@@ -148,7 +157,5 @@ class ChangeOrder
         }
 
         return $data;
-    }
-        return array_intersect_key($data, array_flip($this->fillable));
     }
 }

@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use App\Core\Model;
+// use App\Core\Model;
 
-class UserPermission extends Model
+class UserPermission
 {
     protected $table = 'user_permissions';
 
@@ -13,6 +13,7 @@ class UserPermission extends Model
      */
     public function getUserPermissions(int $userId): array
     {
-        return $this->findAllBy('user_id', $userId);
+       return []; 
+        // return $this->findAllBy('user_id', $userId);
     }
 }

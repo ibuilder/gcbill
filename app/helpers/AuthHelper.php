@@ -74,13 +74,14 @@ class AuthHelper {
      * @param int $userId
      */
     private function setSession(int $userId): void {
-         // Regenerate session ID for security upon login
-         session_regenerate_id(true);
-         $_SESSION[$this->sessionKey] = $userId;
+        // Regenerate session ID for security upon login
+        session_regenerate_id(true);
+        $_SESSION[$this->sessionKey] = $userId;
     }
 
     /**
      * Hash a password using configured algorithm.
+     * 
      * @param string $password
      * @return string Hashed password
      */

@@ -6,7 +6,7 @@ use App\Models\UserPermission;
 use App\Models\User;
 
 class Auth
-{
+{    
     public static function checkPermission(object $user, string $controller, string $action): bool
     {
         if (!isset($user->role)) {

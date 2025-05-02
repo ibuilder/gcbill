@@ -2,7 +2,7 @@
 
 namespace AppControllers;
 
-use AppDatabase;
+use App\Database;
 
 class StaffTimeEntriesController extends BaseController
 {
@@ -20,5 +20,4 @@ class StaffTimeEntriesController extends BaseController
     {
         echo "View Staff Time Entry {$id} for project {$projectId}";
     }
-
 }

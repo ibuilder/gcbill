@@ -2,12 +2,12 @@
 
 namespace AppControllers;
 
-use AppLibrariesAuth;
-use AppModelsUser;
-use AppDatabase;
+use App\Libraries\Auth;
+use App\Models\User;
+use App\Database;
 
-class LoginController extends BaseController
-{
+class LoginController extends \App\Controllers\BaseController
+{    
     public function __construct(Database $db)
     {
         parent::__construct($db);
@@ -17,7 +17,7 @@ class LoginController extends BaseController
     {
         if (Auth::isLoggedIn()) {
             header('Location: /');
-            exit;
+            exit();
         }
 
         return $this->view('auth/login');
@@ -27,7 +27,7 @@ class LoginController extends BaseController
     {
         if (Auth::isLoggedIn()) {
             header('Location: /');
-            exit;
+            exit();
         }
 
         $username = $data['username'] ?? null;
@@ -35,27 +35,40 @@ class LoginController extends BaseController
 
         if (!$username || !$password) {
             $_SESSION['error'] = 'Please enter your username and password.';
-            header('Location: /login');
-            exit;
+            header('Location: /login');            
+            exit();
         }
         
         $userModel = new User($this->db);
         $user = $userModel->getByUsername($username);
 
         if (!$user) {
-            $_SESSION['error'] = 'User not found.';
-            header('Location: /login');
-            exit;
+            $_SESSION['error'] = 'User not found.';            
+            header('Location: /login');            
+            exit();
         }
         
         if (password_verify($password, $user->password)) {
             Auth::login($user);
-            header('Location: /');
-            exit;
+            header('Location: /');            
+            exit();
         } else {
-            $_SESSION['error'] = 'Invalid username or password.';
-            header('Location: /login');
-            exit;
+            $_SESSION['error'] = 'Invalid username or password.';            
+            header('Location: /login');            
+            exit();
         }
+    }
+
+    public function showLogin(){
+         if (Auth::isLoggedIn()) {
+            header('Location: /');
+            exit();
+        }
+
+        return $this->view->render('auth/login');
+    }
+    public function logout(){
+        Auth::logout();
+        header('Location: /login');
     }
 }

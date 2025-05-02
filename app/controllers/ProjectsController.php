@@ -2,13 +2,13 @@
 
 namespace AppControllers;
 
-use AppLibrariesAuth;
+use App\Libraries\Auth;
 use Exception;
-use AppDatabase;
-use AppModelsProject;
-use AppModelsOwner;
+use App\Database;
+use App\Models\Project;
+use App\Models\Owner;
 
-class ProjectsController extends BaseController
+class ProjectsController extends \App\Controllers\BaseController
 {
     protected $controller = 'Projects';
     protected $action;
@@ -49,7 +49,7 @@ class ProjectsController extends BaseController
         try{
             $project = new Project($this->db);
             $projects = $project->all();
-            include(__DIR__ . '/../../templates/projects/index.html');
+            $this->view->render('project/list.html', ['projects' => $projects]);
         }catch(Exception $e){
             error_log('Error in ProjectsController::index: ' . $e->getMessage());
             include(__DIR__ . '/../../templates/error.html');
@@ -70,8 +70,8 @@ class ProjectsController extends BaseController
                 include(__DIR__ . '/../../templates/404.html');
                 return;
             }
-            $owners = (new Owner($this->db))->all();
-            include(__DIR__ . '/../../templates/projects/view.html');
+            $owner = new Owner($this->db);
+            $this->view->render('project/view.html', ['project' => $project, 'owner' => $owner]);
         }catch(Exception $e){
             error_log('Error in ProjectsController::view: ' . $e->getMessage());
             include(__DIR__ . '/../../templates/error.html');
@@ -87,12 +87,8 @@ class ProjectsController extends BaseController
      */
     public function create(array $data): string
     {
-        $this->before('create');        
-        try{
-            $project = new Project($this->db);
-            foreach ($data as $key => $value) {
-                $project->$key = $value;
-            }
+        $project = new Project($this->db);
+        $this->before('create');
             $result = $project->create($data);
             if(!$result){
                 include(__DIR__ . '/../../templates/error.html');
@@ -114,6 +110,7 @@ class ProjectsController extends BaseController
      */
     public function edit(int $id, array $data): string
     {
+
         $this->before('edit');
         try{
             $project = new Project($this->db);
@@ -142,6 +139,7 @@ class ProjectsController extends BaseController
      */
     public function delete(int $id): string
     {
+
         $this->before('delete');
         try{
             $project = new Project($this->db);

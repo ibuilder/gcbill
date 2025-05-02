@@ -1,9 +1,9 @@
 <?php
 namespace AppControllers;
 
-use AppLibrariesAuth;
-use AppModelsBillingPeriod;
-use AppDatabase;
+use App\Libraries\Auth;
+use App\Models\BillingPeriod;
+use App\Database;
 
 class BillingPeriodsController extends BaseController
 {

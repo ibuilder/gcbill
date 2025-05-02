@@ -2,11 +2,11 @@
 
 namespace AppControllers;
 
-use AppLibrariesAuth;
-use AppModelsChangeOrder as AppModelsChangeOrder;
-use AppDatabase;
+use App\Libraries\Auth;
+use App\Models\ChangeOrder as AppModelsChangeOrder;
+use App\Database;
 
-class ChangeOrdersController extends BaseController
+class ChangeOrdersController extends \App\Controllers\BaseController
 {
      protected $controller = 'ChangeOrders';
     protected $action;

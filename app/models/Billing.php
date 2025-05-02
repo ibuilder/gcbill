@@ -1,12 +1,11 @@
 <?php
-// filepath: c:\Users\iphoe\OneDrive\Documents\Server\construction-billing\production\construction-billing-app\app\Models\Billing.php
+
 <?php
 
-namespace App\Models;
+namespace App\Models; // Corrected namespace
 
 use App\Database;
-
-class Billing {
+class Billing { // Corrected class name
     private Database $db;
     private array $fillable = [
         'project_id', 'billing_number', 'period_start_date', 'period_end_date',

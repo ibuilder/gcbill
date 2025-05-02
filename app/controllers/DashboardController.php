@@ -2,9 +2,9 @@
 
 namespace AppControllers;
 
-use AppDatabase;
+use App\Database;
 
-class DashboardController extends BaseController
+class DashboardController extends \App\Controllers\BaseController //added for testing purpose, should be modified after
 {
     public function __construct(Database $db)
     {

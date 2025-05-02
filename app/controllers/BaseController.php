@@ -1,11 +1,10 @@
 <?php
 
 namespace App\Controllers;
-
+use Exception;
 use App\Database;
 use App\View;
 use App\Helpers\AuthHelper;
-
 abstract class BaseController
 {
     protected Database $db;
@@ -31,7 +30,7 @@ abstract class BaseController
     protected function view(string $path, array $data = []): string
     {
         // Assuming your view files are in a 'templates' directory
-        $fullPath =  'templates/' . $path . '.php';
+        $fullPath =  APP_ROOT .'/templates/' . $path;
         
         if (!file_exists($fullPath)) {
             throw new Exception("View file not found: " . $fullPath, 404);

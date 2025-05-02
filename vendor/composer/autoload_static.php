@@ -10,6 +10,8 @@ class ComposerStaticInit1007c64b374514410679dda556d8eb5e
         '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
         '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
         'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
+        'e55ea5b654b4d0b00f6e8db9f129247d' => __DIR__ . '/../..' . '/app/helpers/Helper.php',
+        'feb235f250fd269e9b1fc2b97ec37bcd' => __DIR__ . '/../..' . '/app/helpers/AuthHelper.php',
         'baeeea0a30338c107b19523469128da0' => __DIR__ . '/../..' . '/app/helpers/auth_helper.php',
         '83c991c112a42dd456f6a43fed0953c3' => __DIR__ . '/../..' . '/app/helpers/validation_helper.php',
         '54456c57c81bce8ea177f668138639bc' => __DIR__ . '/../..' . '/app/helpers/pdf_helper.php',
@@ -74,6 +76,8 @@ class ComposerStaticInit1007c64b374514410679dda556d8eb5e
     );
 
     public static $classMap = array (
+        'App\\Router' => __DIR__ . '/../..' . '/app/Router.php',
+        'App\\View' => __DIR__ . '/../..' . '/app/View.php',
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'Datamatrix' => __DIR__ . '/..' . '/tecnickcom/tcpdf/include/barcodes/datamatrix.php',

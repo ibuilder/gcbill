@@ -1,5 +1,5 @@
 <?php
-// filepath: c:\Users\iphoe\OneDrive\Documents\Server\construction-billing\production\construction-billing-app\app\Helpers\ViewHelper.php
+
 <?php
 namespace App\Helpers;
 

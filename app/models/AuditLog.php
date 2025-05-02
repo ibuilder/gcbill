@@ -2,7 +2,8 @@
 
 namespace App\Models;
 
-class AuditLog extends \Core\Model
+
+class AuditLog extends Model
 {
     protected static $table = 'audit_log';
 
