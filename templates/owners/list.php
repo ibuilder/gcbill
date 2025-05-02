@@ -1,0 +1,59 @@
+<!-- filepath: c:\Users\iphoe\OneDrive\Documents\Server\construction-billing\production\construction-billing-app\templates\owners\list.html -->
+--- a/templates/owners/list.php
++++ b/templates/owners/list.php
+
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><?= htmlspecialchars($pageTitle ?? 'Owners') ?></h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="/owners/create" class="btn btn-sm btn-outline-primary">Add New Owner</a>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover table-sm">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Owner Name</th>
+                <th scope="col">Primary Contact</th>
+                <th scope="col">Email</th>
+                <th scope="col">Phone</th>
+                <th scope="col">City</th>
+                <th scope="col">State</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (empty($owners)): ?>
+                <tr>
+                    <td colspan="8" class="text-center">No owners found.</td>
+                </tr>
+            <?php else: ?>
+                <?php foreach ($owners as $index => $owner): ?>
+                    <tr>
+                        <td><?= $index + 1 ?></td>
+                        <td><?= htmlspecialchars($owner['owner_name']) ?></td>
+                        <td><?= htmlspecialchars($owner['primary_contact_name'] ?? 'N/A') ?></td>
+                        <td><?= htmlspecialchars($owner['primary_contact_email'] ?? 'N/A') ?></td>
+                        <td><?= htmlspecialchars($owner['primary_contact_phone'] ?? 'N/A') ?></td>
+                        <td><?= htmlspecialchars($owner['city'] ?? 'N/A') ?></td>
+                        <td><?= htmlspecialchars($owner['state'] ?? 'N/A') ?></td>
+                        <td>
+                            <a href="/owners/view/<?= $owner['id'] ?>" class="btn btn-sm btn-outline-info" title="View">View</a>
+                            <a href="/owners/edit/<?= $owner['id'] ?>" class="btn btn-sm btn-outline-secondary" title="Edit">Edit</a>
+                            <form action="/owners/delete/<?= $owner['id'] ?>" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this owner? Projects linked to this owner will have their owner field set to NULL.');">
+                                <?= App\Helpers\SecurityHelper::csrfField(); ?>
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</div>
+
+<?php
+echo $view->includePartial('partials/footer.html', ['config' => $config]);
+?>

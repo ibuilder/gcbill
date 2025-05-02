@@ -16,7 +16,7 @@ abstract class BaseController
     protected function view(string $path, array $data = []): string
     {
         // Assuming your view files are in a 'templates' directory
-        $fullPath =  'templates/' . $path . '.html';
+        $fullPath =  'templates/' . $path . '.php';
         
         if (!file_exists($fullPath)) {
             throw new Exception("View file not found: " . $fullPath, 404);
