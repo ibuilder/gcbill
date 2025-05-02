@@ -63,15 +63,27 @@ set_exception_handler(function(Throwable $exception) use ($config) {
     } else {
         try {
             $view = new View();
-            $errorTemplate = 'errors/500.html';
-            $templatePath = APP_ROOT . '/templates/' . $errorTemplate;
+            $errorTemplate = 'errors/500.php'; // Assuming 500.php exists
+            // Corrected: Base path for views
+            $templatePath = APP_ROOT . '/app/views/' . $errorTemplate;
             if (file_exists($templatePath)) {
-               if (!headers_sent())  $view->output($errorTemplate);
+               if (!headers_sent()) {
+                   // Use render method which handles output buffering and data extraction
+                   echo $view->render($errorTemplate);
+               }
             } else {
-                error_log("Internal Server Error");
+                // Fallback if template doesn't exist
+                if (!headers_sent()) {
+                    echo "Internal Server Error"; // Simple fallback message
+                }
+                error_log("Error template not found: " . $templatePath);
             }
         } catch (\Throwable $e) {
             error_log("Error rendering 500 page: " . $e->getMessage());
+            // Final fallback
+            if (!headers_sent()) {
+                 echo "An critical error occurred.";
+            }
         }
     }    
     exit; // Stop execution after handling the exception

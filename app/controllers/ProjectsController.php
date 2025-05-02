@@ -45,14 +45,16 @@ class ProjectsController extends \App\Controllers\BaseController
      */
     public function index(): void
     {
-        $this->before('index');        
+        $this->before('index');
         try{
             $project = new Project($this->db);
             $projects = $project->all();
-            $this->view->render('project/list.html', ['projects' => $projects]);
+            // Corrected: Use .php extension
+            $this->render('project/list.php', ['projects' => $projects]);
         }catch(Exception $e){
             error_log('Error in ProjectsController::index: ' . $e->getMessage());
-            include(__DIR__ . '/../../templates/error.html');
+            // Corrected: Use render for error page
+            $this->render('errors/500.php', ['message' => 'An unexpected error occurred.']);
         }
     }
 
@@ -67,14 +69,17 @@ class ProjectsController extends \App\Controllers\BaseController
             $project = new Project($this->db);
             $project = $project->find($id);
             if(!$project){
-                include(__DIR__ . '/../../templates/404.html');
+                // Corrected: Use render for 404 page
+                $this->render('errors/404.php');
                 return;
             }
             $owner = new Owner($this->db);
-            $this->view->render('project/view.html', ['project' => $project, 'owner' => $owner]);
+            // Corrected: Use .php extension
+            $this->render('project/view.php', ['project' => $project, 'owner' => $owner]);
         }catch(Exception $e){
             error_log('Error in ProjectsController::view: ' . $e->getMessage());
-            include(__DIR__ . '/../../templates/error.html');
+            // Corrected: Use render for error page
+            $this->render('errors/500.php', ['message' => 'An unexpected error occurred while loading the project.']);
         }
     }
 
@@ -87,18 +92,25 @@ class ProjectsController extends \App\Controllers\BaseController
      */
     public function create(array $data): string
     {
-        $project = new Project($this->db);
-        $this->before('create');
+        // ... (validation and other logic) ...
+        try { // Added try-catch block
+            $project = new Project($this->db);
+            $this->before('create');
             $result = $project->create($data);
             if(!$result){
-                include(__DIR__ . '/../../templates/error.html');
-                return "";
+                // Corrected: Use render for error page (or set flash message and redirect)
+                $this->setFlashMessage('error', 'Failed to create project.');
+                // Redirecting might be better here than rendering an error directly
+                $this->redirect('/projects/create'); // Example redirect
+                return ""; // Return empty or handle differently
             }
             return "{$result}";
         }catch(Exception $e){
             error_log('Error in ProjectsController::create: ' . $e->getMessage());
-            include(__DIR__ . '/../../templates/error.html');
-            return "";
+            // Corrected: Use render for error page (or set flash message and redirect)
+            $this->setFlashMessage('error', 'An unexpected error occurred while creating the project.');
+            $this->redirect('/projects/create'); // Example redirect
+            return ""; // Return empty or handle differently
         }
     }
 
@@ -135,29 +147,37 @@ class ProjectsController extends \App\Controllers\BaseController
     /**
      * Delete action: Delete a project.
      * @param int $id The project ID.
-     * @return string The project ID.
+     * @return void
      */
-    public function delete(int $id): string
+    public function delete(int $id): void // Changed return type hint
     {
-
-        $this->before('delete');
-        try{
-            $project = new Project($this->db);
-            $project = $project->find($id);
+        // ... (permission checks, CSRF checks) ...
+        try { // Added try-catch block
+            $project = new Project($this->db); // Assuming Project model is instantiated
+            $project = $project->find($id); // Assuming find method exists
             if(!$project){
-                include(__DIR__ . '/../../templates/404.html');
-                return "";
+                // Corrected: Use render for 404 page (or set flash message and redirect)
+                $this->setFlashMessage('error', 'Project not found.');
+                $this->redirect('/projects'); // Example redirect
+                return; // Added return
             }
-            $result = $project->delete($id);
+            $result = $project->delete($id); // Assuming delete method exists
             if(!$result){
-                include(__DIR__ . '/../../templates/error.html');
-                return "";
+                // Corrected: Use render for error page (or set flash message and redirect)
+                $this->setFlashMessage('error', 'Failed to delete project.');
+                $this->redirect('/projects/view/' . $id); // Example redirect
+                return; // Added return
             }
-            return "{$id}";
+            // Corrected: Redirect after successful deletion
+            $this->setFlashMessage('success', 'Project deleted successfully.');
+            $this->redirect('/projects');
+            // Removed return "{$id}"; - redirect is usually preferred
         }catch(Exception $e){
             error_log('Error in ProjectsController::delete: ' . $e->getMessage());
-            include(__DIR__ . '/../../templates/error.html');
-            return "";
+            // Corrected: Use render for error page (or set flash message and redirect)
+            $this->setFlashMessage('error', 'An unexpected error occurred while deleting the project.');
+            $this->redirect('/projects'); // Example redirect
+            // Removed return "";
         }
     }
 }

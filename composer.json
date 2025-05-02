@@ -1,11 +1,11 @@
 {
-    "name": "your-vendor/construction-billing-app",
-    "description": "Construction Billing Management System",
+    "name": "your-vendor/gcbill",
+    "description": "Construction Billing Management System (GCBill)",
     "type": "project",
     "license": "proprietary",
     "authors": [
         {
-            "name": "Your Name",
+            "name": "Your Name or Company",
             "email": "your.email@example.com"
         }
     ],
@@ -24,13 +24,14 @@
             "app/helpers/CalculationHelper.php",
             "app/helpers/SecurityHelper.php",
             "app/helpers/ValidationHelper.php",
-            "app/helpers/SecurityHelper.php",
             "app/helpers/ViewHelper.php",
             "app/helpers/ExcelHelper.php",
             "app/helpers/PDFHelper.php"
         ]
     },
     "config": {
-        "optimize-autoloader": true
+        "optimize-autoloader": true,
+        "process-timeout": 0,
+        "sort-packages": true
     }
 }

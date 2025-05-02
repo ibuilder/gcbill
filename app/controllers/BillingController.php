@@ -48,7 +48,7 @@ class BillingController extends BaseController { // Changed to BillingController
         $billings = $this->billingModel->findByProjectId($projectId); 
         $nextBillingNumber = $this->billingModel->getNextBillingNumber($projectId);
 
-        $this->view->output('billings/list.html', [
+        $this->render('billings/list.php', [
             'pageTitle' => 'Billings for ' . htmlspecialchars($project['project_name']),
             'activeNav' => 'projects', // Keep projects nav active
             'project' => $project,
@@ -86,7 +86,7 @@ class BillingController extends BaseController { // Changed to BillingController
         ];
         unset($_SESSION['form_data']);
 
-        $this->view->output('billings/create.html', [
+        $this->render('billings/create.php', [
             'pageTitle' => 'Create New Billing for ' . htmlspecialchars($project['project_name']),
             'activeNav' => 'projects',
             'project' => $project,
@@ -180,14 +180,13 @@ class BillingController extends BaseController { // Changed to BillingController
 
         // We will load SOV and billing details via AJAX in the view
         // But pass the main billing header info
-        $this->view->output('billings/edit.html', [
+        $this->render('billings/edit.php', [
             'pageTitle' => 'Edit Billing #' . $billing['billing_number'] . ' for ' . htmlspecialchars($project['project_name']),
             'activeNav' => 'projects',
             'project' => $project,
-            'billing' => $billing,
-            // Pass IDs needed for AJAX calls
-            'billingId' => $billingId,
-            'projectId' => $project['id']
+            'billing' => $billing, // Pass the main billing header data
+            'billingId' => $billingId, // Pass ID for JS
+            'projectId' => $billing['project_id'] // Pass Project ID for JS
         ]);
     }
 
@@ -512,9 +511,10 @@ class BillingController extends BaseController { // Changed to BillingController
             $pdf->lastPage();
             $pdfFileName = 'billing-' . $billingId . '.pdf';
             //Close and output PDF document
-            $pdf->Output($pdfFileName, 'D');
+            $pdf->Output($pdfFileName, 'D'); // Force download
+            exit; // Stop script after PDF output
         } else {
-            $this->view->output('billings/view.html', [
+            $this->render('billings/view.php', [
                 'pageTitle' => 'View Billing #' . $billing['billing_number'] . ' - ' . htmlspecialchars($project['project_name']),
                 'activeNav' => 'projects',
                 'project' => $project,

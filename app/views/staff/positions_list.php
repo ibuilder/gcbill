@@ -1,6 +1,6 @@
 <?php
 echo $view->includePartial('partials/header.php', [
-    'pageTitle' => $pageTitle ?? 'View Staff',
+    'pageTitle' => $pageTitle ?? 'List Staff Positions',
     'config' => $config,
     'currentUser' => $currentUser ?? null,
     'activeNav' => $activeNav ?? null
@@ -8,8 +8,8 @@ echo $view->includePartial('partials/header.php', [
 ?>
 
 <div class="container mt-4">
-    <h1>Staff Details</h1>
-    <!-- Staff details will go here -->
+    <h1>List Staff Positions</h1>
+    <!-- Staff positions data will go here -->
 </div>
 
 <?php
