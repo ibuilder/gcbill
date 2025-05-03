@@ -4,6 +4,14 @@ namespace App;
 
 use Throwable; // Import Throwable for exception handler type hint
 
+// Example in your bootstrap file (e.g., public/index.php)
+$dotenvPath = __DIR__ . '/../'; // Adjust path if needed
+if (file_exists($dotenvPath . '.env')) {
+    $dotenv = Dotenv\Dotenv::createImmutable($dotenvPath);
+    $dotenv->load(); // Use load() or safeLoad()
+} 
+// Continue with loading config.php or using default values
+
 // Ensure config is loaded (might be global or passed via DI later)
 global $config;
 // --- Error Handler ---
