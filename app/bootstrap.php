@@ -71,8 +71,7 @@ set_exception_handler(function(Throwable $exception) use ($config) {
     } else {
         try {
             $view = new View();
-            $errorTemplate = 'errors/500.php'; // Assuming 500.php exists
-            // Corrected: Base path for views
+            $errorTemplate = 'errors/500.php';
             $templatePath = APP_ROOT . '/app/views/' . $errorTemplate;
             if (file_exists($templatePath)) {
                if (!headers_sent()) {

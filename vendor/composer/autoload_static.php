@@ -10,14 +10,14 @@ class ComposerStaticInit1007c64b374514410679dda556d8eb5e
         '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
         '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
         'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
-        'e55ea5b654b4d0b00f6e8db9f129247d' => __DIR__ . '/../..' . '/app/helpers/Helper.php',
-        'feb235f250fd269e9b1fc2b97ec37bcd' => __DIR__ . '/../..' . '/app/helpers/AuthHelper.php',
-        '0f45f07996f7ca20e7de7b6118f3a8bb' => __DIR__ . '/../..' . '/app/helpers/CalculationHelper.php',
-        '2fffdc859721ceb4f8d48a1430fdd39d' => __DIR__ . '/../..' . '/app/helpers/SecurityHelper.php',
-        '32c88f57c142e12c7a8acf474f2da9a5' => __DIR__ . '/../..' . '/app/helpers/ValidationHelper.php',
-        '711b2f1ad112e9d954690653b4e5d578' => __DIR__ . '/../..' . '/app/helpers/ViewHelper.php',
-        '8b0c7d59668b7c437182f0bbc12d96fc' => __DIR__ . '/../..' . '/app/helpers/ExcelHelper.php',
-        'e7af28395c063a965ffebda40a22a8c7' => __DIR__ . '/../..' . '/app/helpers/PDFHelper.php',
+        '8edd827f919bae27936ed3253c68f392' => __DIR__ . '/../..' . '/app/helpers/Helper.php',
+        'a59de7a52cda9e8dbbde1c2404637c73' => __DIR__ . '/../..' . '/app/helpers/AuthHelper.php',
+        'e5aea9b0d07ec301224391ebac566728' => __DIR__ . '/../..' . '/app/helpers/CalculationHelper.php',
+        'f972d7da3b4788317afbd85a62babe9a' => __DIR__ . '/../..' . '/app/helpers/SecurityHelper.php',
+        '677eb0797798127eba1fe974209331ac' => __DIR__ . '/../..' . '/app/helpers/ValidationHelper.php',
+        'aadf943d464d899334ee75a5745b252c' => __DIR__ . '/../..' . '/app/helpers/ViewHelper.php',
+        'be89d7b25535ca131a79d9e330937fd1' => __DIR__ . '/../..' . '/app/helpers/ExcelHelper.php',
+        '22128b14af92e798dc80104b8c7116b1' => __DIR__ . '/../..' . '/app/helpers/PDFHelper.php',
     );
 
     public static $prefixLengthsPsr4 = array (
@@ -77,6 +77,7 @@ class ComposerStaticInit1007c64b374514410679dda556d8eb5e
     );
 
     public static $classMap = array (
+        'App\\Database' => __DIR__ . '/../..' . '/app/Database.php',
         'App\\Router' => __DIR__ . '/../..' . '/app/Router.php',
         'App\\View' => __DIR__ . '/../..' . '/app/View.php',
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
