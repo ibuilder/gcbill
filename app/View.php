@@ -28,7 +28,7 @@ class View
     public function render(string $template, array $data = []): string
     {
         // Correctly uses app/views as the base
-        $templateFile = APP_ROOT . '/app/views/' . ltrim($template, '/');
+        $templateFile = APP_ROOT . '/app/views/' . $template;
         if (!file_exists($templateFile)) {
             error_log("View template not found: " . $templateFile);
             throw new \RuntimeException("View template not found: {$template}");
@@ -62,7 +62,7 @@ class View
     public function includePartial(string $partial, array $data = []): string
     {
         // Correctly uses app/views as the base
-        $partialFile = APP_ROOT . '/app/views/' . ltrim($partial, '/');
+        $partialFile = APP_ROOT . '/app/views/' . $partial;
         if (!file_exists($partialFile)) {
             error_log("Partial template not found: " . $partialFile);
             return "<!-- Partial Not Found: {$partial} -->";
