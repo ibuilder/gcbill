@@ -50,6 +50,15 @@ class View
         return ob_get_clean();
     }
 
+        public function output(string $template, array $data = []): void
+    {
+        try {
+            echo $this->render($template, $data);
+        } catch (\Throwable $e) {
+            error_log("Error rendering template {$template}: " . $e->getMessage());
+        }
+    }
+
     public function includePartial(string $partial, array $data = []): string
     {
         // Correctly uses app/views as the base
@@ -71,9 +80,5 @@ class View
         }
         return ob_get_clean();
     }
-
-    public function set(string $key, mixed $value): void
-    {
-        $this->data[$key] = $value;
-    }
+    
 }

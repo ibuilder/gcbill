@@ -8,6 +8,19 @@ use App\View;
 use App\Helpers\AuthHelper;
 use Dotenv\Dotenv;
 
+// --- 0. Global Exception Handler ---
+function handleException($exception) {
+    error_log("Uncaught Exception: " . $exception->getMessage() . " in " . $exception->getFile() . ":" . $exception->getLine());
+    http_response_code(500);
+    $view = new View();
+    echo $view->render('errors/500.php', ['message' => $exception->getMessage()]);
+}
+
+// Set the exception handler function
+set_exception_handler('handleException');
+
+
+
 // --- 1. Define Root Path ---
 // Define APP_ROOT as the directory *above* 'public'
 define('APP_ROOT', dirname(__DIR__));
@@ -111,4 +124,6 @@ try {
     throw $e;
 }
 
+// load routes
+require_once APP_ROOT . '/config/routes.php';
 ?>

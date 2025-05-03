@@ -22,23 +22,17 @@ class User extends Model
     public ?string $updated_at = null;
 
     /**
-     * Find a user by username or email.
+     * Find a user by username or email
      *
      * @param string $identifier Username or email.
-     * @return array|null User data as an array or null if not found.
+     * @return static|null
      */
-    public function findByIdentifier(string $identifier): ?array
+    public function findByIdentifier(string $identifier): ?static
     {
-        $sql = "SELECT * FROM " . static::$tableName . " WHERE username = :identifier OR email = :identifier LIMIT 1";
-        try {
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute(['identifier' => $identifier]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $user ?: null;
-        } catch (\PDOException $e) {
-            error_log("Database Error (User::findByIdentifier): " . $e->getMessage());
-            return null;
-        }
+        return self::query($this->db)
+            ->where('username', '=', $identifier)
+            ->orWhere('email', '=', $identifier)
+            ->first();
     }
 
      /**

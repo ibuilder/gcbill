@@ -8,6 +8,9 @@ echo $view->includePartial('partials/header.php', [
     'currentUser' => $currentUser ?? null, // Pass user to header
     'activeNav' => $activeNav ?? 'dashboard' // Pass active nav indicator
 ]);
+
+// Include flash messages
+echo $view->includePartial('partials/flash-messages.php', ['flashMessages' => $flashMessages ?? null]);
 ?>
 
 <div class="container mt-4">

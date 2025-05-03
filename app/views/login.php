@@ -19,14 +19,19 @@
 <body>
     <div class="login-form">
         <h1>Login</h1>
+        <?php
+        // Correctly include partial
+        echo $view->includePartial('partials/flash-messages.php', ['flashMessages' => $flashMessages ?? null]);
+        ?>
 
         <?php if (isset($error)): ?>
             <p class="error-message"><?php echo htmlspecialchars($error); ?></p>
         <?php endif; ?>
 
         <form action="/login" method="POST">
-            <!-- Add CSRF token if implemented -->
-            <!-- <?//= App\Helpers\SecurityHelper::csrfField(); ?> -->
+            <?php
+                echo App\Helpers\SecurityHelper::csrfField();
+            ?>
             <div>
                 <label for="username">Username or Email:</label>
                 <input type="text" id="username" name="username" required>

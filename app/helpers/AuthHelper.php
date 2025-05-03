@@ -5,14 +5,15 @@ namespace App\Helpers;
 use App\Database;
 use App\Models\User; // Use the User model
 
-class AuthHelper {
+class AuthHelper
+{
     private Database $db;
     private User $userModel;
     private string $sessionKey = 'user'; // Key to store user info in session
 
-    public function __construct() {
-        // Consider using dependency injection instead of a static singleton if possible
-        $this->db = Database::getInstance();
+    public function __construct(Database $db)
+    {
+        $this->db = $db;
         $this->userModel = new User($this->db); // Pass DB instance to model
 
         // Ensure session is started (might be redundant if started elsewhere, e.g., bootstrap)
@@ -27,16 +28,17 @@ class AuthHelper {
      * @param string $password Plain text password
      * @return bool True on success, false on failure
      */
-    public function login(string $identifier, string $password): bool {
+    public function login(string $identifier, string $password): bool
+    {
         $user = $this->userModel->findByIdentifier($identifier);
 
         // Ensure $user is an array and password_hash exists before verification
-        if (is_array($user) && isset($user['password_hash']) && $user['is_active'] && password_verify($password, $user['password_hash'])) {
+        if ($user && isset($user->password_hash) && $user->is_active && password_verify($password, $user->password_hash)) {
             // Password matches and user is active
-            $this->setSession($user); // Pass the user array
+            $this->setSession($user->getAttributes()); // Pass the user array
             // Update last login timestamp (optional)
             // Ensure update method exists and handles potential errors
-            $this->userModel->update($user['id'], ['last_login_at' => date('Y-m-d H:i:s')]);
+            $this->userModel->update($user->id, ['last_login_at' => date('Y-m-d H:i:s')]);
             return true;
         }
 
@@ -46,7 +48,8 @@ class AuthHelper {
     /**
      * Log the current user out.
      */
-    public function logout(): void {
+    public function logout(): void
+    {
         if (session_status() === PHP_SESSION_NONE) {
             session_start(); // Ensure session exists before unsetting/destroying
         }
@@ -61,7 +64,8 @@ class AuthHelper {
      * Check if there is a user currently logged in.
      * @return bool
      */
-    public function isLoggedIn(): bool {
+    public function isLoggedIn(): bool
+    {
         // Ensure session is started before checking
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -85,7 +89,8 @@ class AuthHelper {
      * Get the ID of the currently logged-in user.
      * @return int|null User ID or null if not logged in or ID not set.
      */
-    public function getUserId(): ?int {
+    public function getUserId(): ?int
+    {
         $user = $this->getCurrentUser();
         // Ensure 'id' key exists and is numeric
         return isset($user['id']) && is_numeric($user['id']) ? (int)$user['id'] : null;
@@ -95,7 +100,8 @@ class AuthHelper {
      * Set the user session data.
      * @param array $userData User data array from the database/model.
      */
-    private function setSession(array $userData): void {
+    private function setSession(array $userData): void
+    {
         // Regenerate session ID for security upon login
         session_regenerate_id(true);
         // Store relevant user data, avoid storing sensitive info like password hash
@@ -106,6 +112,7 @@ class AuthHelper {
             'email' => $userData['email'] ?? null,
             'role' => $userData['role'] ?? null,
             'name' => $userData['name'] ?? null,
+            'permissions' => isset($userData['permissions']) ? json_decode($userData['permissions'], true) : [],
             // Add other necessary non-sensitive fields
         ];
     }
@@ -117,7 +124,8 @@ class AuthHelper {
      * @param string $password
      * @return string Hashed password
      */
-    public function hashPassword(string $password): string {
+    public function hashPassword(string $password): string
+    {
         // Using global $config is generally discouraged. Prefer dependency injection.
         // Assuming $config is loaded elsewhere (e.g., bootstrap.php)
         global $config;
@@ -131,20 +139,33 @@ class AuthHelper {
      * @param string|array $roles A single role string or an array of allowed roles.
      * @return bool True if the user has one of the roles, false otherwise.
      */
-    public function checkRole(string|array $roles): bool {
-         $user = $this->getCurrentUser();
-         if (!$user || !isset($user['role'])) {
-             return false; // Not logged in or role not set
-         }
+    public function checkRole(string|array $roles): bool
+    {
+        $user = $this->getCurrentUser();
+        if (!$user || !isset($user['role'])) {
+            return false; // Not logged in or role not set
+        }
 
-         $userRole = $user['role'];
-         if (is_array($roles)) {
-             return in_array($userRole, $roles, true); // Use strict comparison
-         } else {
-             return $userRole === $roles; // Use strict comparison
-         }
+        $userRole = $user['role'];
+        if (is_array($roles)) {
+            return in_array($userRole, $roles, true); // Use strict comparison
+        } else {
+            return $userRole === $roles; // Use strict comparison
+        }
     }
 
-    // Add methods for more granular permission checks if needed
-    // public function hasPermission(string $permission): bool { ... }
+    /**
+     * Check if the current user has a specific permission.
+     * @param string $permission The permission to check.
+     * @return bool True if the user has the permission, false otherwise.
+     */
+    public function hasPermission(string $permission): bool {
+        $user = $this->getCurrentUser();
+        if (!$user || !isset($user['permissions'])) {
+            return false; // Not logged in or no permissions set
+        }
+
+        $permissions = $user['permissions'];
+        return in_array($permission, $permissions, true); // Use strict comparison
+    }
 }

@@ -149,6 +149,8 @@ abstract class Model
             return $success;
         } catch (PDOException $e) {
             error_log("Database Insert Error (" . static::$tableName . "): " . $e->getMessage());
+            $this->db->setFlashMessage('error', 'A database error occurred. Please try again.');
+            $this->db->redirect('/dashboard');
             return false;
         }
     }
@@ -189,6 +191,8 @@ abstract class Model
             return $stmt->execute($data);
         } catch (PDOException $e) {
             error_log("Database Update Error (" . static::$tableName . "): " . $e->getMessage());
+            $this->db->setFlashMessage('error', 'A database error occurred. Please try again.');
+            $this->db->redirect('/dashboard');
             return false;
         }
     }
@@ -214,6 +218,8 @@ abstract class Model
             return $stmt->execute([$pk => $id]);
         } catch (PDOException $e) {
             error_log("Database Delete Error (" . static::$tableName . "): " . $e->getMessage());
+            $this->db->setFlashMessage('error', 'A database error occurred. Please try again.');
+            $this->db->redirect('/dashboard');
             return false;
         }
     }
@@ -363,10 +369,8 @@ class QueryBuilder
             $stmt = $this->db->prepare($sql);
             $stmt->execute($this->bindings);
             $data = $stmt->fetch(PDO::FETCH_ASSOC);
-            // Return as object or null
-            return $data ? (object)$data : null; // Return as stdClass object
-            // Or if you want model instance:
-            // return $data ? new $this->modelClass($this->db, $data) : null;
+           
+            return $data ? new $this->modelClass($this->db, $data) : null;
         } catch (PDOException $e) {
             error_log("Database Query Error ({$this->tableName}): " . $e->getMessage());
             return null;
