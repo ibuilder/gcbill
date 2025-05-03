@@ -2,12 +2,6 @@
 
 declare(strict_types=1); // Enable strict types for better type safety
 
-// --- Start Session ---
-// Start session only if not already started (good practice)
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 use App\Router;
 use App\Database; // Assumes Database.php is correctly located in app/Database.php
 use App\View;
@@ -23,11 +17,17 @@ require_once APP_ROOT . '/vendor/autoload.php';
 
 // --- Load Environment Variables ---
 // Load .env file from the project root
-$dotenv = Dotenv::createImmutable(APP_ROOT);
-$dotenv->load(); // Use load() or safeLoad() if .env is optional
+// Use safeLoad() to prevent errors if .env is missing, but log it.
+try {
+    $dotenv = Dotenv::createImmutable(APP_ROOT);
+    $dotenv->safeLoad(); // Use safeLoad to avoid exceptions if file missing
+} catch (\Throwable $e) {
+    error_log("Error loading .env file: " . $e->getMessage());
+    // Decide if this is critical; maybe exit or use defaults
+}
+
 
 // --- Load Configuration ---
-// $config should be available globally after this include
 // config.php should return the config array
 $config = require APP_ROOT . '/config/config.php';
 if (!is_array($config)) {
@@ -38,14 +38,77 @@ if (!is_array($config)) {
     exit;
 }
 
+// --- Configure PHP Error Reporting EARLY ---
+// Set error reporting based on config BEFORE potential output from session functions
+ini_set('display_errors', ($config['app']['debug'] ?? false) ? '1' : '0');
+ini_set('display_startup_errors', ($config['app']['debug'] ?? false) ? '1' : '0');
+if ($config['app']['env'] === 'development') {
+    error_reporting(E_ALL);
+} else {
+    error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT & ~E_NOTICE); // Example for production
+}
+// Set default timezone early as well
+if (!empty($config['app']['timezone'])) {
+    date_default_timezone_set($config['app']['timezone']);
+}
 
-// --- Bootstrap Application (Error Handling, etc.) ---
-// This file sets up global error/exception handlers using $config
+
+// --- Configure Session BEFORE Starting It ---
+// Check if session isn't already active AND headers haven't been sent
+if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+    if (isset($config['session'])) {
+        // Set session name if defined in config
+        if (!empty($config['session']['name'])) {
+            session_name($config['session']['name']);
+        }
+
+        // Prepare cookie parameters array
+        $cookieParams = [
+            'lifetime' => ($config['session']['lifetime'] ?? 120) * 60, // Convert minutes to seconds, default 120 mins
+            'path' => $config['session']['path'] ?? '/',
+            'domain' => $config['session']['domain'] ?? '', // Use empty string if null
+            'secure' => $config['session']['secure'] ?? false,
+            'httponly' => $config['session']['httponly'] ?? true,
+        ];
+
+        // Add SameSite attribute if PHP version supports it
+        if (PHP_VERSION_ID >= 70300 && isset($config['session']['samesite'])) {
+            $cookieParams['samesite'] = $config['session']['samesite'];
+        }
+
+        // Set session cookie parameters
+        session_set_cookie_params($cookieParams);
+    }
+
+    // --- Start Session ---
+    session_start();
+
+} elseif (headers_sent($file, $line)) {
+    // Log if headers were already sent before session could start
+    error_log("Session could not be started because headers were already sent in {$file} on line {$line}");
+}
+
+
+// --- Bootstrap Application (Error/Exception Handlers AFTER session start) ---
+// Now safe to include Bootstrap, which might echo errors in debug mode
 require_once APP_ROOT . '/app/Bootstrap.php';
 
 // Instantiate the Database connection *once*
 // Pass the database-specific configuration from the global $config
-$db = new Database($config['db']); // Pass only the 'db' part of the config
+try {
+    $db = new Database($config['db']); // Pass only the 'db' part of the config
+} catch (\Throwable $e) {
+    // Catch DB connection errors specifically if Bootstrap handler isn't sufficient
+    error_log("Database connection failed: " . $e->getMessage());
+    // Let the Bootstrap exception handler take over if it was set up
+    if (isset($config['app']['debug']) && $config['app']['debug']) {
+         echo "<h1>Database Error</h1><p>Could not connect to the database. Check logs.</p><pre>" . $e->getMessage() . "</pre>";
+    } else {
+         echo "<h1>Internal Server Error</h1><p>A critical error occurred. Please try again later.</p>";
+    }
+    exit;
+}
+
 
 // --- Authentication Check ---
 $authHelper = new AuthHelper($db); // Instantiate AuthHelper, passing the Database instance

@@ -1,16 +1,14 @@
 <?php
 /**
- * Main Configuration File
+ * Application Configuration
+ *
+ * Use environment variables for sensitive data.
  */
-
-// Ensure APP_ROOT is defined (usually done in index.php)
-if (!defined('APP_ROOT')) {
-    define('APP_ROOT', dirname(__DIR__)); // Adjust if config is moved deeper
-}
 
 // Function to get environment variables with a default value
 function env(string $key, $default = null) {
-    return $_ENV[$key] ?? $default;
+    // Check $_ENV first, then $_SERVER, then return default
+    return $_ENV[$key] ?? $_SERVER[$key] ?? $default;
 }
 
 $config = [
@@ -27,9 +25,9 @@ $config = [
         'driver' => env('DB_CONNECTION', 'mysql'), // E.g., 'mysql', 'pgsql', 'sqlite'
         'host' => env('DB_HOST', '127.0.0.1'),
         'port' => env('DB_PORT', 3306),
-        'database' => env('DB_DATABASE', 'gcbill_db'),
-        'username' => env('DB_USERNAME', 'root'),
-        'password' => env('DB_PASSWORD', ''),
+        'database' => env('DB_DATABASE', 'ibuilder_gcbill'),
+        'username' => env('DB_USERNAME', 'ibuilder_gcbill'),
+        'password' => env('DB_PASSWORD', 'Rockville@98765'),
         'charset' => 'utf8mb4',
         'collation' => 'utf8mb4_unicode_ci',
         'prefix' => '',
@@ -41,17 +39,21 @@ $config = [
     ],
 
     'session' => [
+        'name' => env('SESSION_NAME', 'GCBILL_SESSION'), // Session cookie name
         'driver' => env('SESSION_DRIVER', 'file'), // 'file', 'database', 'redis'
         'lifetime' => env('SESSION_LIFETIME', 120), // Session lifetime in minutes
         'expire_on_close' => false,
         'encrypt' => false, // Encrypt session data?
         'path' => '/', // Cookie path
         'domain' => env('SESSION_DOMAIN', null), // Cookie domain (null for current domain)
-        'secure' => env('SESSION_SECURE_COOKIE', false), // Send cookie only over HTTPS? Set to true in production
+        'secure' => filter_var(env('SESSION_SECURE_COOKIE', false), FILTER_VALIDATE_BOOLEAN), // Send cookie only over HTTPS? Set to true in production
         'httponly' => true, // Prevent JavaScript access to session cookie
         'samesite' => 'Lax', // CSRF protection: 'Lax' or 'Strict'
         // For file driver:
         'files' => APP_ROOT . '/storage/sessions', // Ensure this directory exists and is writable
+        // For database driver:
+        // 'table' => 'sessions',
+        // 'connection' => null, // Use default DB connection
     ],
 
     'view' => [
@@ -67,62 +69,10 @@ $config = [
         'level' => env('LOG_LEVEL', 'debug'), // 'debug', 'info', 'notice', 'warning', 'error', 'critical', 'alert', 'emergency'
     ],
 
-    'mail' => [
-        'from_email' => env('MAIL_FROM_ADDRESS', 'no-reply@example.com'),
-        'from_name' => env('MAIL_FROM_NAME', 'Construction Billing App'),
-        'smtp_host' => env('MAIL_HOST', 'smtp.mailtrap.io'),
-        'smtp_port' => (int)(env('MAIL_PORT', 587)),
-        'smtp_secure' => env('MAIL_ENCRYPTION', 'tls'),
-        'smtp_auth' => true,
-        'smtp_username' => env('MAIL_USERNAME', null),
-        'smtp_password' => env('MAIL_PASSWORD', null),
-    ],
-
-    'aia' => [
-        'g702_template' => APP_ROOT . '/templates/aia/g702_template.html',
-        'g703_template' => APP_ROOT . '/templates/aia/g703_template.html',
-    ],
+    // Add other configuration sections as needed (e.g., mail, services)
 ];
 
-$GLOBALS['config'] = $config;
-date_default_timezone_set($config['app']['timezone']);
-
-if ($config['app']['env'] === 'development' || $config['app']['debug']) {
-    error_reporting(E_ALL);
-    ini_set('display_errors', 1);
-    ini_set('display_startup_errors', 1);
-} else {
-    error_reporting(0);
-    ini_set('display_errors', 0);
-    ini_set('display_startup_errors', 0);
-}
-
-session_name($config['session']['name']);
-session_set_cookie_params($config['session']['cookie_lifetime'],$config['session']['cookie_path'], $config['session']['cookie_domain'],$config['session']['cookie_secure'],$config['session']['cookie_httponly']);
-
-// --- Session Cookie Settings ---
-// Apply session cookie parameters based on config
-// Note: This should ideally happen *before* session_start() in index.php if possible,
-// or ensure session_start() is called after this config is loaded.
-// If session_start() is already called in index.php before this, these might not take effect immediately.
-session_set_cookie_params(
-    $config['session']['lifetime'] * 60, // Convert minutes to seconds
-    $config['session']['path'],
-    $config['session']['domain'] ?? '', // Use empty string if null
-    $config['session']['secure'],
-    $config['session']['httponly']
-);
-// Note: SameSite attribute needs PHP 7.3+ and is set differently:
-if (PHP_VERSION_ID >= 70300) {
-    session_set_cookie_params([
-        'lifetime' => $config['session']['lifetime'] * 60,
-        'path' => $config['session']['path'],
-        'domain' => $config['session']['domain'] ?? '',
-        'secure' => $config['session']['secure'],
-        'httponly' => $config['session']['httponly'],
-        'samesite' => $config['session']['samesite'] // Added SameSite
-    ]);
-}
+// Ensure NO session_set_cookie_params() calls are here.
 
 return $config; // Return the config array
 ?>
