@@ -6,6 +6,7 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
+    'App\\Database' => $baseDir . '/app/Database.php',
     'App\\Router' => $baseDir . '/app/Router.php',
     'App\\View' => $baseDir . '/app/View.php',
     'Attribute' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',

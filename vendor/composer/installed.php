@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
-        'name' => 'your-vendor/construction-billing-app',
-        'pretty_version' => 'dev-main',
-        'version' => 'dev-main',
-        'reference' => 'd952d33bdb8242265e845b96dea4f87988deef02',
+        'name' => 'your-vendor/gcbill',
+        'pretty_version' => '1.0.0+no-version-set',
+        'version' => '1.0.0.0',
+        'reference' => null,
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -73,10 +73,10 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
-        'your-vendor/construction-billing-app' => array(
-            'pretty_version' => 'dev-main',
-            'version' => 'dev-main',
-            'reference' => 'd952d33bdb8242265e845b96dea4f87988deef02',
+        'your-vendor/gcbill' => array(
+            'pretty_version' => '1.0.0+no-version-set',
+            'version' => '1.0.0.0',
+            'reference' => null,
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

@@ -78,7 +78,7 @@ try {
 
     // Dispatch the request using the Router
     // Assuming router->dispatch returns ['controller' => ..., 'action' => ..., 'params' => [...]] or throws an exception
-    $route = $router->dispatch($httpMethod, $uri);
+    $route = $router->match($uri, $httpMethod);
 
     // --- 9. Controller Dispatch ---
     $controllerName = $route['controller']; // Assuming Router provides the full class name or namespace part
