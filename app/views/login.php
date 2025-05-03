@@ -28,9 +28,9 @@
             <p class="error-message"><?php echo htmlspecialchars($error); ?></p>
         <?php endif; ?>
 
-        <form action="/login" method="POST">
+        <form action="/auth/login" method="POST">
             <?php
-                echo App\Helpers\SecurityHelper::csrfField();
+            echo '<input type="hidden" name="' . $this->config['security']['csrf_token_name'] . '" value="' . App\Helpers\SecurityHelper::generateCSRFToken() . '">';
             ?>
             <div>
                 <label for="username">Username or Email:</label>

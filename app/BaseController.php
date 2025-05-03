@@ -1,34 +1,23 @@
 <?php
 
-namespace App\Controllers;
+namespace App\Controllers; // Assuming this is the correct namespace
 
-use App\Helpers\AuthHelper;
-use App\Helpers\SecurityHelper;
+use App\Helpers\AuthHelper; // Ensure correct path
+use App\Helpers\SecurityHelper; // Ensure correct path
 
-class AuthController extends BaseController
-{
-    protected AuthHelper $auth;
+class AuthController extends BaseController {
+    protected AuthHelper $auth; // Type declaration
 
-    public function __construct()
-    {
-        parent::__construct();
-        $this->auth = new AuthHelper($this->db);
+    public function __construct() {
+        parent::__construct(); // Ensure parent constructor is called
+        $this->auth = new AuthHelper($this->db); // Instantiate AuthHelper
     }
 
-    public function login()
-    {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (!SecurityHelper::validateToken($_POST[SecurityHelper::getFormInputName()])) {
-                $this->db->setFlashMessage('error', 'Invalid CSRF token.');
-                $this->db->redirect('/login');
-            }
-            // ... rest of your login logic ...
-        }
+    public function login() {
+        // moved to base controller.
 
-        $this->view->output('login', [
-            'flashMessages' => $this->getFlashMessages() ?? [],
-        ]);
+        $this->view->output('login', ['flashMessages' => $this->getFlashMessages() ?? [], ]);
     }
 
-//... rest of your AuthController
+}
 }

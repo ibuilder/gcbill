@@ -19,6 +19,7 @@ $config = [
         'key' => $_ENV['APP_KEY'] ?? 'base64:YourSecretKeyHereGenerateOne!',
         'default_controller' => 'dashboard',
         'default_action' => 'index',
+        'public_paths' => ['/login', '/auth/login', '/forgot-password', '/reset-password'],
     ],
 
     // Database configuration (using environment variables)
@@ -53,8 +54,8 @@ $config = [
     ],
 
     // Security configuration
-    'security' => [
-        'password_hash_algo' => PASSWORD_BCRYPT,
+   'security' => [
+        'password_hash_algo'    => PASSWORD_BCRYPT,
         'password_hash_options' => ['cost' => 12],
         'csrf_token_name' => '_token',
     ],
